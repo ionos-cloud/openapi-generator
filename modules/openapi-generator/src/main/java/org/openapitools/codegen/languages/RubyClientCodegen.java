@@ -56,8 +56,8 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
     protected String gemDescription = "This gem maps to a REST API";
     protected String gemAuthor = "";
     protected String gemAuthorEmail = "";
-    protected String apiDocPath = "docs/";
-    protected String modelDocPath = "docs/";
+    protected String apiDocPath = "docs/api/";
+    protected String modelDocPath = "docs/models/";
 
     public RubyClientCodegen() {
         super();

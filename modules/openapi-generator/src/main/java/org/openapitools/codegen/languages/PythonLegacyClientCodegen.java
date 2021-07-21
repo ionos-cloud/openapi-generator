@@ -39,8 +39,8 @@ public class PythonLegacyClientCodegen extends AbstractPythonCodegen implements 
     public static final String PYTHON_ATTR_NONE_IF_UNSET = "pythonAttrNoneIfUnset";
 
     protected String packageUrl;
-    protected String apiDocPath = "docs/";
-    protected String modelDocPath = "docs/";
+    protected String apiDocPath = "docs/api/";
+    protected String modelDocPath = "docs/models/";
     protected boolean useNose = Boolean.FALSE;
 
     protected Map<Character, String> regexModifiers;

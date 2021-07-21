@@ -1,0 +1,79 @@
+# {{classname}}{{#description}}
+
+{{description}}{{/description}}
+
+All URIs are relative to *{{basePath}}*
+
+| Method | HTTP request | Description |
+| ------ | ------------ | ----------- |
+{{#operations}}
+{{#operation}}
+| [**{{operationId}}**]({{classname}}.md#{{operationIdLowerCase}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{summary}}{{/summary}} |
+{{/operation}}
+{{/operations}}
+
+{{#operations}}
+{{#operation}}
+
+## {{operationId}}
+
+> {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}<{{{returnType}}}>{{/returnTypeIsPrimitive}} {{/returnType}}{{operationId}}{{#hasParams}}({{#requiredParams}}{{{paramName}}}{{^-last}}, {{/-last}}{{/requiredParams}}{{#optionalParams}}{{#-last}}{{#hasRequiredParams}}, {{/hasRequiredParams}}opts{{/-last}}{{/optionalParams}}){{/hasParams}}
+
+{{{summary}}}{{#notes}}
+
+{{{notes}}}{{/notes}}
+
+### Examples
+
+```javascript
+const ionoscloud = require('@ionos-cloud/sdk-nodejs');
+// setup authorization
+const config = new ionoscloud.Configuration({
+{{#hasAuthMethods}}
+    username: 'YOUR_USERNAME',
+    password: 'YOUR_PASSWORD',
+    apiKey: 'YOUR_API_KEY'
+{{/hasAuthMethods}}
+});
+const api_instance = new ionoscloud.{{{classname}}}(config);
+{{#summary}}// {{{.}}}{{/summary}}
+{{#returnType}}{{/returnType}}api_instance
+  .{{{operationId}}}({{#hasParams}}{
+    {{#allParams}}{{{paramName}}}: {{#example}}{{{example}}}{{/example}}{{^example}}{{{paramName}}}_example{{/example}}{{^-last}},
+    {{/-last}}{{/allParams}}{{#optionalParams}}{{#-last}}{{#hasRequiredParams}}, {{/hasRequiredParams}}
+    options: {}{{/-last}}{{/optionalParams}}
+  }{{/hasParams}})
+  .then((response) => console.log(response.data))
+  .catch((error) => console.log(error.response.data));
+{{#returnType}}
+{{/returnType}}
+```
+
+### Parameters
+
+{{^allParams}}
+This endpoint does not need any parameter.
+{{/allParams}}
+{{#allParams}}
+{{#-first}}
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+{{/-first}}
+| **{{paramName}}** | {{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{#isFile}}**{{dataType}}**{{/isFile}}{{^isFile}}[**{{dataType}}**](../models/{{baseType}}.md){{/isFile}}{{/isPrimitiveType}} | {{description}} | {{^required}}[optional]{{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}} |
+{{/allParams}}
+
+### Return type
+
+{{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**](../models/{{returnBaseType}}.md){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}nil (empty response body){{/returnType}}
+
+### Authorization
+
+{{^authMethods}}No authorization required{{/authMethods}}{{#authMethods}}{{name}}{{^-last}}, {{/-last}}{{/authMethods}}
+
+### HTTP request headers
+
+- **Content-Type**: {{#consumes}}{{{mediaType}}}{{^-last}}, {{/-last}}{{/consumes}}{{^consumes}}Not defined{{/consumes}}
+- **Accept**: {{#produces}}{{{mediaType}}}{{^-last}}, {{/-last}}{{/produces}}{{^produces}}Not defined{{/produces}}
+
+{{/operation}}
+{{/operations}}
