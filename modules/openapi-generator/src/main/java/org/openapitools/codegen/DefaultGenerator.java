@@ -63,6 +63,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.removeStart;
@@ -88,6 +89,7 @@ public class DefaultGenerator implements Generator {
     private String basePath;
     private String basePathWithoutHost;
     private String contextPath;
+    private List<String> skipTags = new ArrayList<>();
     private Map<String, String> generatorPropertyDefaults = new HashMap<>();
     protected TemplateProcessor templateProcessor = null;
 
@@ -101,6 +103,11 @@ public class DefaultGenerator implements Generator {
     public DefaultGenerator(Boolean dryRun) {
         this.dryRun = Boolean.TRUE.equals(dryRun);
         LOGGER.info("Generating with dryRun={}", this.dryRun);
+        String skipTagsProperty = GlobalSettings.getProperty("skipTags");
+        if(skipTagsProperty != null) {
+            skipTags = Arrays.asList(skipTagsProperty.split(","));
+        }
+        LOGGER.info("Generating with skipTags={}", skipTags);
     }
 
     @SuppressWarnings("deprecation")
@@ -527,6 +534,10 @@ public class DefaultGenerator implements Generator {
                             // for PythonClientCodegen, all aliases are generated as models
                             continue;  // Don't create user-defined classes for aliases
                         }
+                        if(hasAnySkipTag(skipTags, m)) {
+                            LOGGER.info("Skipped generating model {}", m.name);
+                            continue;
+                        }
                     }
                     allModels.add(modelTemplate);
                 }
@@ -549,6 +560,20 @@ public class DefaultGenerator implements Generator {
             Json.prettyPrint(allModels);
         }
 
+    }
+
+    private boolean hasAnySkipTag(List<String> skipTags, CodegenModel m) {
+        Map<String, Object> vendorExtensions = m.vendorExtensions;
+        return skipTags.stream().anyMatch(hasSkipTag(vendorExtensions));
+    }
+
+    private boolean hasAnySkipTag(List<String> skipTags, CodegenOperation op) {
+        Map<String, Object> vendorExtensions = op.vendorExtensions;
+        return skipTags.stream().anyMatch(hasSkipTag(vendorExtensions));
+    }
+
+    private Predicate<String> hasSkipTag(Map<String, Object> vendorExtensions) {
+        return skipTag -> vendorExtensions.containsKey(skipTag) && (boolean) vendorExtensions.get(skipTag);
     }
 
     @SuppressWarnings("unchecked")
@@ -577,6 +602,11 @@ public class DefaultGenerator implements Generator {
             try {
                 List<CodegenOperation> ops = paths.get(tag);
                 ops.sort((one, another) -> ObjectUtils.compare(one.operationId, another.operationId));
+                ops.removeIf(op -> hasInProgressExtension(tag, op));
+                if(ops.isEmpty()) {
+                    LOGGER.info("The {} client will not be generated", tag);
+                    continue;
+                }
                 Map<String, Object> operation = processOperations(config, tag, ops, allModels);
                 URL url = URLPathUtils.getServerURL(openAPI, config.serverVariableOverrides());
                 operation.put("basePath", basePath);
@@ -682,6 +712,13 @@ public class DefaultGenerator implements Generator {
             Json.prettyPrint(allOperations);
         }
 
+    }
+    private boolean hasInProgressExtension(String tag, CodegenOperation op) {
+        if (hasAnySkipTag(skipTags, op)) {
+            LOGGER.info("Operation {} of {} will not be generated", op.operationId, tag);
+            return true;
+        }
+        return false;
     }
 
     private void generateSupportingFiles(List<File> files, Map<String, Object> bundle) {

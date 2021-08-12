@@ -53,6 +53,11 @@ public class CodegenOperation {
     public List<Map<String, String>> examples;
     public List<Map<String, String>> requestBodyExamples;
     public ExternalDocumentation externalDocs;
+
+    public Map<String, Object> getVendorExtensions() {
+        return vendorExtensions;
+    }
+
     public Map<String, Object> vendorExtensions = new HashMap<String, Object>();
     public String nickname; // legacy support
     public String operationIdOriginal; // for plug-in
