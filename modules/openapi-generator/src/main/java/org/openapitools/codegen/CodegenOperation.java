@@ -188,7 +188,7 @@ public class CodegenOperation {
      * @return true if act as Restful index method, false otherwise
      */
     public boolean isRestfulIndex() {
-        return "GET".equalsIgnoreCase(httpMethod) && "".equals(pathWithoutBaseName());
+        return "GET".equalsIgnoreCase(httpMethod) && !isMemberPath();
     }
 
     /**
@@ -206,7 +206,7 @@ public class CodegenOperation {
      * @return true if act as Restful create method, false otherwise
      */
     public boolean isRestfulCreate() {
-        return "POST".equalsIgnoreCase(httpMethod) && "".equals(pathWithoutBaseName());
+        return "POST".equalsIgnoreCase(httpMethod) && !isMemberPath();
     }
 
     /**
@@ -255,14 +255,14 @@ public class CodegenOperation {
     }
 
     /**
-     * Check if the path match format /xxx/:id
+     * Check if the path ends with /xxx/:id
      *
      * @return true if path act as member
      */
     private boolean isMemberPath() {
-        if (pathParams.size() != 1) return false;
-        String id = pathParams.get(0).baseName;
-        return ("/{" + id + "}").equals(pathWithoutBaseName());
+        if (pathParams.size() < 1) return false;
+        String id = pathParams.get(pathParams.size() - 1).baseName;
+        return path.endsWith("/{" + id + "}");
     }
 
     @Override
