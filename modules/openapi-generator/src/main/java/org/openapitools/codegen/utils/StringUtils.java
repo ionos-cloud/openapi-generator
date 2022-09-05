@@ -89,6 +89,12 @@ public class StringUtils {
         });
     }
 
+    /**
+     * Escapes the Word Tokens set on escapedWordTokens Global Property.
+     * E.g. deleteABC -> deleteAbc; the result can be then transformed into snake case as delete_abc.
+     * @param result The name of the property
+     * @return The processed name of the property, with the tokens escaped
+     */
     private static String escapeWordTokens(String result) {
         List<String> escapedWordTokens = new ArrayList<>();
         String escapedWordTokensProperty = GlobalSettings.getProperty("escapedWordTokens");
