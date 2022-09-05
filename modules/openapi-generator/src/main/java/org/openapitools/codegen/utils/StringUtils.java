@@ -7,12 +7,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openapitools.codegen.config.GlobalSettings;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,6 +76,8 @@ public class StringUtils {
             result = pkgSeparatorPattern.matcher(wordToUnderscore).replaceAll("/");
             // Replace $ with two underscores for inner classes.
             result = dollarPattern.matcher(result).replaceAll("__");
+            // Normalize uppercase/lowercase letters in acronyms
+            result = escapeWordTokens(result);
             // Replace capital letter with _ plus lowercase letter.
             result = capitalLetterPattern.matcher(result).replaceAll(replacementPattern);
             result = lowercasePattern.matcher(result).replaceAll(replacementPattern);
@@ -90,6 +87,18 @@ public class StringUtils {
             result = result.toLowerCase(Locale.ROOT);
             return result;
         });
+    }
+
+    private static String escapeWordTokens(String result) {
+        List<String> escapedWordTokens = new ArrayList<>();
+        String escapedWordTokensProperty = GlobalSettings.getProperty("escapedWordTokens");
+        if(escapedWordTokensProperty != null) {
+            escapedWordTokens = Arrays.asList(escapedWordTokensProperty.split(","));
+        }
+        for(String token : escapedWordTokens) {
+            result = result.replaceAll(token, token.charAt(0) + token.substring(1).toLowerCase(Locale.ROOT));
+        }
+        return result;
     }
 
     /**
