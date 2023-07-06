@@ -44,6 +44,10 @@ import org.openapitools.codegen.ignore.CodegenIgnoreProcessor;
 import org.openapitools.codegen.languages.PythonClientCodegen;
 import org.openapitools.codegen.meta.GeneratorMetadata;
 import org.openapitools.codegen.meta.Stability;
+import org.openapitools.codegen.model.ModelMap;
+import org.openapitools.codegen.model.ModelsMap;
+import org.openapitools.codegen.model.OperationMap;
+import org.openapitools.codegen.model.OperationsMap;
 import org.openapitools.codegen.serializer.SerializerUtils;
 import org.openapitools.codegen.templating.CommonTemplateContentLocator;
 import org.openapitools.codegen.templating.GeneratorTemplateContentLocator;
@@ -62,7 +66,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.removeStart;
@@ -88,6 +94,7 @@ public class DefaultGenerator implements Generator {
     private String basePath;
     private String basePathWithoutHost;
     private String contextPath;
+    private List<String> skipTags = new ArrayList<>();
     private Map<String, String> generatorPropertyDefaults = new HashMap<>();
     protected TemplateProcessor templateProcessor = null;
 
@@ -394,8 +401,7 @@ public class DefaultGenerator implements Generator {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    void generateModels(List<File> files, List<Object> allModels, List<String> unusedModels) {
+    void generateModels(List<File> files, List<ModelMap> allModels, List<String> unusedModels) {
         if (!generateModels) {
             // TODO: Process these anyway and add to dryRun info
             LOGGER.info("Skipping generation of models.");
@@ -427,7 +433,7 @@ public class DefaultGenerator implements Generator {
         }
 
         // store all processed models
-        Map<String, Object> allProcessedModels = new TreeMap<>((o1, o2) -> ObjectUtils.compare(config.toModelName(o1), config.toModelName(o2)));
+        Map<String, ModelsMap> allProcessedModels = new TreeMap<>((o1, o2) -> ObjectUtils.compare(config.toModelName(o1), config.toModelName(o2)));
 
         Boolean skipFormModel = GlobalSettings.getProperty(CodegenConstants.SKIP_FORM_MODEL) != null ?
                 Boolean.valueOf(GlobalSettings.getProperty(CodegenConstants.SKIP_FORM_MODEL)) :
@@ -472,7 +478,7 @@ public class DefaultGenerator implements Generator {
                     // generators may choose to make models for use case 2 + 3
                     Schema refSchema = new Schema();
                     refSchema.set$ref("#/components/schemas/"+name);
-                    Schema unaliasedSchema = config.unaliasSchema(refSchema, config.importMapping());
+                    Schema unaliasedSchema = config.unaliasSchema(refSchema);
                     if (unaliasedSchema.get$ref() == null) {
                         LOGGER.info("Model {} not generated since it's a free-form object", name);
                         continue;
@@ -496,7 +502,7 @@ public class DefaultGenerator implements Generator {
 
                 Map<String, Schema> schemaMap = new HashMap<>();
                 schemaMap.put(name, schema);
-                Map<String, Object> models = processModels(config, schemaMap);
+                ModelsMap models = processModels(config, schemaMap);
                 models.put("classname", config.toModelName(name));
                 models.putAll(config.additionalProperties());
                 allProcessedModels.put(name, models);
@@ -513,7 +519,7 @@ public class DefaultGenerator implements Generator {
 
         // generate files based on processed models
         for (String modelName : allProcessedModels.keySet()) {
-            Map<String, Object> models = (Map<String, Object>) allProcessedModels.get(modelName);
+            ModelsMap models = allProcessedModels.get(modelName);
             models.put("modelPackage", config.modelPackage());
             try {
                 //don't generate models that have an import mapping
@@ -522,9 +528,9 @@ public class DefaultGenerator implements Generator {
                 }
 
                 // TODO revise below as we've already performed unaliasing so that the isAlias check may be removed
-                List<Object> modelList = (List<Object>) models.get("models");
+                List<ModelMap> modelList = models.getModels();
                 if (modelList != null && !modelList.isEmpty()) {
-                    Map<String, Object> modelTemplate = (Map<String, Object>) modelList.get(0);
+                    ModelMap modelTemplate = modelList.get(0);
                     if (modelTemplate != null && modelTemplate.containsKey("model")) {
                         CodegenModel m = (CodegenModel) modelTemplate.get("model");
                         if (m.isAlias && !(config instanceof PythonClientCodegen))  {
@@ -575,7 +581,7 @@ public class DefaultGenerator implements Generator {
     }
 
     @SuppressWarnings("unchecked")
-    void generateApis(List<File> files, List<Object> allOperations, List<Object> allModels) {
+    void generateApis(List<File> files, List<OperationsMap> allOperations, List<ModelMap> allModels) {
         if (!generateApis) {
             // TODO: Process these anyway and present info via dryRun?
             LOGGER.info("Skipping generation of APIs.");
@@ -605,7 +611,7 @@ public class DefaultGenerator implements Generator {
                     LOGGER.info("The {} client will not be generated", tag);
                     continue;
                 }
-                Map<String, Object> operation = processOperations(config, tag, ops, allModels);
+                OperationsMap operation = processOperations(config, tag, ops, allModels);
                 URL url = URLPathUtils.getServerURL(openAPI, config.serverVariableOverrides());
                 operation.put("basePath", basePath);
                 operation.put("basePathWithoutHost", removeTrailingSlash(config.encodePath(url.getPath())));
@@ -633,6 +639,8 @@ public class DefaultGenerator implements Generator {
                 operation.put("importPath", config.toApiImport(tag));
                 operation.put("classFilename", config.toApiFilename(tag));
                 operation.put("strictSpecBehavior", config.isStrictSpecBehavior());
+                Optional.ofNullable(openAPI.getInfo()).map(Info::getLicense).ifPresent(license -> operation.put("license", license));
+                Optional.ofNullable(openAPI.getInfo()).map(Info::getContact).ifPresent(contact -> operation.put("contact", contact));
 
                 if (allModels == null || allModels.isEmpty()) {
                     operation.put("hasModel", false);
@@ -670,7 +678,7 @@ public class DefaultGenerator implements Generator {
                 processMimeTypes(swagger.getProduces(), operation, "produces");
                 */
 
-                allOperations.add(new HashMap<>(operation));
+                allOperations.add(operation);
 
                 addAuthenticationSwitches(operation);
 
@@ -806,8 +814,7 @@ public class DefaultGenerator implements Generator {
         generateVersionMetadata(files);
     }
 
-    @SuppressWarnings("unchecked")
-    Map<String, Object> buildSupportFileBundle(List<Object> allOperations, List<Object> allModels) {
+    Map<String, Object> buildSupportFileBundle(List<OperationsMap> allOperations, List<ModelMap> allModels) {
 
         Map<String, Object> bundle = new HashMap<>(config.additionalProperties());
         bundle.put("apiPackage", config.apiPackage());
@@ -847,8 +854,7 @@ public class DefaultGenerator implements Generator {
         }
 
         for (int i = 0; i < allModels.size() - 1; i++) {
-            HashMap<String, CodegenModel> cm = (HashMap<String, CodegenModel>) allModels.get(i);
-            CodegenModel m = cm.get("model");
+            CodegenModel m = allModels.get(i).getModel();
             m.hasMoreModels = true;
         }
 
@@ -944,10 +950,10 @@ public class DefaultGenerator implements Generator {
         List<File> files = new ArrayList<>();
         // models
         List<String> filteredSchemas = ModelUtils.getSchemasUsedOnlyInFormParam(openAPI);
-        List<Object> allModels = new ArrayList<>();
+        List<ModelMap> allModels = new ArrayList<>();
         generateModels(files, allModels, filteredSchemas);
         // apis
-        List<Object> allOperations = new ArrayList<>();
+        List<OperationsMap> allOperations = new ArrayList<>();
         generateApis(files, allOperations, allModels);
 
         // supporting files
@@ -1226,41 +1232,43 @@ public class DefaultGenerator implements Generator {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> processOperations(CodegenConfig config, String tag, List<CodegenOperation> ops, List<Object> allModels) {
-        Map<String, Object> operations = new HashMap<>();
-        Map<String, Object> objs = new HashMap<>();
-        objs.put("classname", config.toApiName(tag));
-        objs.put("pathPrefix", config.toApiVarName(tag));
+    private OperationsMap processOperations(CodegenConfig config, String tag, List<CodegenOperation> ops, List<ModelMap> allModels) {
+        OperationsMap operations = new OperationsMap();
+        OperationMap objs = new OperationMap();
+        objs.setClassname(config.toApiName(tag));
+        objs.setPathPrefix(config.toApiVarName(tag));
 
-        // check for operationId uniqueness
-        Set<String> opIds = new HashSet<>();
-        int counter = 0;
-        for (CodegenOperation op : ops) {
-            String opId = op.nickname;
-            if (opIds.contains(opId)) {
-                counter++;
-                op.nickname += "_" + counter;
+        // check for nickname uniqueness
+        if (config.getAddSuffixToDuplicateOperationNicknames()) {
+            Set<String> opIds = new HashSet<>();
+            int counter = 0;
+            for (CodegenOperation op : ops) {
+                String opId = op.nickname;
+                if (opIds.contains(opId)) {
+                    counter++;
+                    op.nickname += "_" + counter;
+                }
+                opIds.add(opId);
             }
-            opIds.add(opId);
         }
-        objs.put("operation", ops);
+        objs.setOperation(ops);
 
-        operations.put("operations", objs);
+        operations.setOperation(objs);
         operations.put("package", config.apiPackage());
 
-        Set<String> allImports = new TreeSet<>();
+        Set<String> allImports = new ConcurrentSkipListSet<>();
         for (CodegenOperation op : ops) {
             allImports.addAll(op.imports);
         }
 
-        Map<String,String> mappings = getAllImportsMappings(allImports);
+        Map<String, String> mappings = getAllImportsMappings(allImports);
         Set<Map<String, String>> imports = toImportsObjects(mappings);
 
         //Some codegen implementations rely on a list interface for the imports
-        operations.put("imports", imports.stream().collect(Collectors.toList()));
+        operations.setImports(new ArrayList<>(imports));
 
         // add a flag to indicate whether there's any {{import}}
-        if (imports.size() > 0) {
+        if (!imports.isEmpty()) {
             operations.put("hasImport", true);
         }
 
@@ -1311,8 +1319,8 @@ public class DefaultGenerator implements Generator {
         return result;
      }
 
-    private Map<String, Object> processModels(CodegenConfig config, Map<String, Schema> definitions) {
-        Map<String, Object> objs = new HashMap<>();
+    private ModelsMap processModels(CodegenConfig config, Map<String, Schema> definitions) {
+        ModelsMap objs = new ModelsMap();
         objs.put("package", config.modelPackage());
         List<Object> models = new ArrayList<>();
         Set<String> allImports = new LinkedHashSet<>();

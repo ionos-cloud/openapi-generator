@@ -17,6 +17,7 @@
 
 package org.openapitools.codegen.languages;
 
+import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.parser.util.SchemaTypeUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +44,7 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
     public static final String STRING_ENUMS_DESC = "Generate string enums instead of objects for enum values.";
 
     protected String npmRepository = null;
+    protected Boolean stringEnums = false;
     protected String apiDocPath = "docs/api/";
     protected String modelDocPath = "docs/models/";
 
