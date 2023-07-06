@@ -11,6 +11,7 @@ Method | HTTP request | Description
 [**UserAPI_getUserByName**](UserAPI.md#UserAPI_getUserByName) | **GET** /user/{username} | Get user by user name
 [**UserAPI_loginUser**](UserAPI.md#UserAPI_loginUser) | **GET** /user/login | Logs user into the system
 [**UserAPI_logoutUser**](UserAPI.md#UserAPI_logoutUser) | **GET** /user/logout | Logs out current logged in user session
+[**UserAPI_testIntAndBool**](UserAPI.md#UserAPI_testIntAndBool) | **GET** /user/testIntAndBool | test integer and boolean query parameters in API
 [**UserAPI_updateUser**](UserAPI.md#UserAPI_updateUser) | **PUT** /user/{username} | Updated user
 
 
@@ -26,7 +27,7 @@ void UserAPI_createUser(apiClient_t *apiClient, user_t * body);
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
 **body** | **[user_t](user.md) \*** | Created user object | 
 
 ### Return type
@@ -54,7 +55,7 @@ void UserAPI_createUsersWithArrayInput(apiClient_t *apiClient, list_t * body);
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
 **body** | **[list_t](user.md) \*** | List of user object | 
 
 ### Return type
@@ -82,7 +83,7 @@ void UserAPI_createUsersWithListInput(apiClient_t *apiClient, list_t * body);
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
 **body** | **[list_t](user.md) \*** | List of user object | 
 
 ### Return type
@@ -112,7 +113,7 @@ void UserAPI_deleteUser(apiClient_t *apiClient, char * username);
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
 **username** | **char \*** | The name that needs to be deleted | 
 
 ### Return type
@@ -140,7 +141,7 @@ user_t* UserAPI_getUserByName(apiClient_t *apiClient, char * username);
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
 **username** | **char \*** | The name that needs to be fetched. Use user1 for testing. | 
 
 ### Return type
@@ -169,7 +170,7 @@ char* UserAPI_loginUser(apiClient_t *apiClient, char * username, char * password
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
 **username** | **char \*** | The user name for login | 
 **password** | **char \*** | The password for login in clear text | 
 
@@ -200,7 +201,38 @@ void UserAPI_logoutUser(apiClient_t *apiClient);
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
+
+### Return type
+
+void
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **UserAPI_testIntAndBool**
+```c
+// test integer and boolean query parameters in API
+//
+// This can test integer and boolean query parameters in API.
+//
+void UserAPI_testIntAndBool(apiClient_t *apiClient, int keep, int keepDay);
+```
+
+### Parameters
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
+**keep** | **int** | Whether to keep user data after deletion | [optional] 
+**keepDay** | **int** | how many days user data is kept after deletion | [optional] 
 
 ### Return type
 
@@ -229,7 +261,7 @@ void UserAPI_updateUser(apiClient_t *apiClient, char * username, user_t * body);
 ### Parameters
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**apiClient** | **apiClient_t \*** | context containing the client configuration | 
+**apiClient** | **apiClient_t \*** | context containing the client configuration |
 **username** | **char \*** | name that need to be deleted | 
 **body** | **[user_t](user.md) \*** | Updated user object | 
 

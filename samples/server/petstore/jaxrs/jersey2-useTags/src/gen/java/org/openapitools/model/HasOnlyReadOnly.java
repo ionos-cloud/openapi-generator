@@ -16,6 +16,7 @@ package org.openapitools.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -89,15 +90,14 @@ public class HasOnlyReadOnly   {
       return false;
     }
     HasOnlyReadOnly hasOnlyReadOnly = (HasOnlyReadOnly) o;
-    return Objects.equals(this.bar, hasOnlyReadOnly.bar) &&
-        Objects.equals(this.foo, hasOnlyReadOnly.foo);
+    return Objects.equals(bar, hasOnlyReadOnly.bar) &&
+        Objects.equals(foo, hasOnlyReadOnly.foo);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(bar, foo);
   }
-
 
   @Override
   public String toString() {

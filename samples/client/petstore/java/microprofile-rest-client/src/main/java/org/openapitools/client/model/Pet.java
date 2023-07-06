@@ -44,7 +44,7 @@ public class Pet  {
   private String name;
 
   @JsonbProperty("photoUrls")
-  private List<String> photoUrls = new ArrayList<String>();
+  private List<String> photoUrls = new ArrayList<>();
 
   @JsonbProperty("tags")
   private List<Tag> tags = null;
@@ -53,7 +53,7 @@ public class Pet  {
   @JsonbTypeDeserializer(StatusEnum.Deserializer.class)
   public enum StatusEnum {
 
-    AVAILABLE(String.valueOf("available")), PENDING(String.valueOf("pending")), SOLD(String.valueOf("sold"));    
+    AVAILABLE(String.valueOf("available")), PENDING(String.valueOf("pending")), SOLD(String.valueOf("sold"));
 
 
     String value;
@@ -96,7 +96,7 @@ public class Pet  {
   **/
   @JsonbProperty("status")
   private StatusEnum status;
-  
+
  /**
    * Get id
    * @return id

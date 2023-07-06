@@ -89,15 +89,14 @@ public class Tag   {
       return false;
     }
     Tag tag = (Tag) o;
-    return Objects.equals(this.id, tag.id) &&
-        Objects.equals(this.name, tag.name);
+    return Objects.equals(id, tag.id) &&
+        Objects.equals(name, tag.name);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(id, name);
   }
-
 
   @Override
   public String toString() {

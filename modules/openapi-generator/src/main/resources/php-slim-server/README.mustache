@@ -120,7 +120,7 @@ For instance, when abstract class located at `./lib/Api/AbstractPetApi.php` you 
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}*{{classname}}* | **{{operationId}}** | **{{httpMethod}}** {{path}} | {{#summary}}{{{summary}}}{{/summary}}
+{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}*{{classname}}* | **{{operationId}}** | **{{httpMethod}}** {{path}} | {{{summary}}}
 {{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
 {{/generateApiDocs}}
 
@@ -144,11 +144,11 @@ No model defined in this package
 {{/-last}}
 {{/authMethods}}
 {{#authMethods}}
-{{#isBasic}}
+{{#isBasicBasic}}
 ### Security schema `{{name}}`
 > Important! To make Basic authentication work you need to extend [\{{authPackage}}\{{abstractNamePrefix}}Authenticator{{abstractNameSuffix}}]({{authSrcPath}}/{{abstractNamePrefix}}Authenticator{{abstractNameSuffix}}.php) class by [\{{authPackage}}\BasicAuthenticator](./src/Auth/BasicAuthenticator.php) class.
 
-{{/isBasic}}
+{{/isBasicBasic}}
 {{#isApiKey}}
 ### Security schema `{{name}}`
 > Important! To make ApiKey authentication work you need to extend [\{{authPackage}}\{{abstractNamePrefix}}Authenticator{{abstractNameSuffix}}]({{authSrcPath}}/{{abstractNamePrefix}}Authenticator{{abstractNameSuffix}}.php) class by [\{{authPackage}}\ApiKeyAuthenticator](./src/Auth/ApiKeyAuthenticator.php) class.
@@ -160,7 +160,7 @@ No model defined in this package
 
 Scope list:
 {{#scopes}}
-* `{{scope}}`{{#description}} - {{description}}{{/description}}
+* `{{scope}}`{{#description}} - {{.}}{{/description}}
 {{/scopes}}
 
 {{/isOAuth}}

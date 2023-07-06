@@ -67,15 +67,13 @@ public class AdditionalPropertiesInteger extends HashMap<String, Integer> implem
       return false;
     }
     AdditionalPropertiesInteger additionalPropertiesInteger = (AdditionalPropertiesInteger) o;
-    return Objects.equals(this.name, additionalPropertiesInteger.name) &&
-        super.equals(o);
+    return super.equals(o) && Objects.equals(name, additionalPropertiesInteger.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, super.hashCode());
+    return Objects.hash(super.hashCode(), name);
   }
-
 
   @Override
   public String toString() {

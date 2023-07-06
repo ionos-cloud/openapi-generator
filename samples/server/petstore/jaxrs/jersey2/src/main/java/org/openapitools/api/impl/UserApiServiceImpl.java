@@ -1,9 +1,7 @@
 package org.openapitools.api.impl;
 
 import org.openapitools.api.*;
-import org.openapitools.model.*;
-
-import java.util.List;
+import java.util.Date;
 import org.openapitools.model.User;
 
 import java.util.List;

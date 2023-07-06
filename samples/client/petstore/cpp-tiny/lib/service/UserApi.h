@@ -4,12 +4,11 @@
 
 #include "Response.h"
 #include "Arduino.h"
-#include "AbstractService.h"
+#include "Service.h"
 #include "Helpers.h"
 #include <list>
 
 #include "User.h"
-#include <list>
 
 namespace Tiny {
 
@@ -18,7 +17,7 @@ namespace Tiny {
  * Generated with openapi::tiny-cpp-client
  */
 
-class UserApi : public AbstractService {
+class UserApi : public Service {
 public:
     UserApi() = default;
 

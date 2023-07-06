@@ -16,6 +16,7 @@ package org.openapitools.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -91,15 +92,14 @@ public class Model200Response  implements Serializable {
       return false;
     }
     Model200Response _200response = (Model200Response) o;
-    return Objects.equals(this.name, _200response.name) &&
-        Objects.equals(this.propertyClass, _200response.propertyClass);
+    return Objects.equals(name, _200response.name) &&
+        Objects.equals(propertyClass, _200response.propertyClass);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, propertyClass);
   }
-
 
   @Override
   public String toString() {

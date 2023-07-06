@@ -16,6 +16,7 @@ package org.openapitools.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.io.File;
@@ -405,27 +406,26 @@ public class FormatTest  implements Serializable {
       return false;
     }
     FormatTest formatTest = (FormatTest) o;
-    return Objects.equals(this.integer, formatTest.integer) &&
-        Objects.equals(this.int32, formatTest.int32) &&
-        Objects.equals(this.int64, formatTest.int64) &&
-        Objects.equals(this.number, formatTest.number) &&
-        Objects.equals(this._float, formatTest._float) &&
-        Objects.equals(this._double, formatTest._double) &&
-        Objects.equals(this.string, formatTest.string) &&
-        Objects.equals(this._byte, formatTest._byte) &&
-        Objects.equals(this.binary, formatTest.binary) &&
-        Objects.equals(this.date, formatTest.date) &&
-        Objects.equals(this.dateTime, formatTest.dateTime) &&
-        Objects.equals(this.uuid, formatTest.uuid) &&
-        Objects.equals(this.password, formatTest.password) &&
-        Objects.equals(this.bigDecimal, formatTest.bigDecimal);
+    return Objects.equals(integer, formatTest.integer) &&
+        Objects.equals(int32, formatTest.int32) &&
+        Objects.equals(int64, formatTest.int64) &&
+        Objects.equals(number, formatTest.number) &&
+        Objects.equals(_float, formatTest._float) &&
+        Objects.equals(_double, formatTest._double) &&
+        Objects.equals(string, formatTest.string) &&
+        Objects.equals(_byte, formatTest._byte) &&
+        Objects.equals(binary, formatTest.binary) &&
+        Objects.equals(date, formatTest.date) &&
+        Objects.equals(dateTime, formatTest.dateTime) &&
+        Objects.equals(uuid, formatTest.uuid) &&
+        Objects.equals(password, formatTest.password) &&
+        Objects.equals(bigDecimal, formatTest.bigDecimal);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(integer, int32, int64, number, _float, _double, string, _byte, binary, date, dateTime, uuid, password, bigDecimal);
   }
-
 
   @Override
   public String toString() {

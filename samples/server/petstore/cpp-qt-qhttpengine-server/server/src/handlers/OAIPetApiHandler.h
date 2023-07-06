@@ -17,6 +17,7 @@
 #include "OAIApiResponse.h"
 #include "OAIHttpFileElement.h"
 #include "OAIPet.h"
+#include <QList>
 #include <QString>
 
 namespace OpenAPI {
@@ -24,7 +25,7 @@ namespace OpenAPI {
 class OAIPetApiHandler : public QObject
 {
     Q_OBJECT
-    
+
 public:
     OAIPetApiHandler();
     virtual ~OAIPetApiHandler();

@@ -79,7 +79,7 @@ public class XmlItem   {
 
   public static final String JSON_PROPERTY_WRAPPED_ARRAY = "wrapped_array";
   @JsonProperty(JSON_PROPERTY_WRAPPED_ARRAY)
-  private List<Integer> wrappedArray = null;
+  private List<Integer> wrappedArray;
 
   public static final String JSON_PROPERTY_NAME_STRING = "name_string";
   @JsonProperty(JSON_PROPERTY_NAME_STRING)
@@ -99,11 +99,11 @@ public class XmlItem   {
 
   public static final String JSON_PROPERTY_NAME_ARRAY = "name_array";
   @JsonProperty(JSON_PROPERTY_NAME_ARRAY)
-  private List<Integer> nameArray = null;
+  private List<Integer> nameArray;
 
   public static final String JSON_PROPERTY_NAME_WRAPPED_ARRAY = "name_wrapped_array";
   @JsonProperty(JSON_PROPERTY_NAME_WRAPPED_ARRAY)
-  private List<Integer> nameWrappedArray = null;
+  private List<Integer> nameWrappedArray;
 
   public static final String JSON_PROPERTY_PREFIX_STRING = "prefix_string";
   @JsonProperty(JSON_PROPERTY_PREFIX_STRING)
@@ -123,11 +123,11 @@ public class XmlItem   {
 
   public static final String JSON_PROPERTY_PREFIX_ARRAY = "prefix_array";
   @JsonProperty(JSON_PROPERTY_PREFIX_ARRAY)
-  private List<Integer> prefixArray = null;
+  private List<Integer> prefixArray;
 
   public static final String JSON_PROPERTY_PREFIX_WRAPPED_ARRAY = "prefix_wrapped_array";
   @JsonProperty(JSON_PROPERTY_PREFIX_WRAPPED_ARRAY)
-  private List<Integer> prefixWrappedArray = null;
+  private List<Integer> prefixWrappedArray;
 
   public static final String JSON_PROPERTY_NAMESPACE_STRING = "namespace_string";
   @JsonProperty(JSON_PROPERTY_NAMESPACE_STRING)
@@ -147,11 +147,11 @@ public class XmlItem   {
 
   public static final String JSON_PROPERTY_NAMESPACE_ARRAY = "namespace_array";
   @JsonProperty(JSON_PROPERTY_NAMESPACE_ARRAY)
-  private List<Integer> namespaceArray = null;
+  private List<Integer> namespaceArray;
 
   public static final String JSON_PROPERTY_NAMESPACE_WRAPPED_ARRAY = "namespace_wrapped_array";
   @JsonProperty(JSON_PROPERTY_NAMESPACE_WRAPPED_ARRAY)
-  private List<Integer> namespaceWrappedArray = null;
+  private List<Integer> namespaceWrappedArray;
 
   public static final String JSON_PROPERTY_PREFIX_NS_STRING = "prefix_ns_string";
   @JsonProperty(JSON_PROPERTY_PREFIX_NS_STRING)
@@ -171,11 +171,11 @@ public class XmlItem   {
 
   public static final String JSON_PROPERTY_PREFIX_NS_ARRAY = "prefix_ns_array";
   @JsonProperty(JSON_PROPERTY_PREFIX_NS_ARRAY)
-  private List<Integer> prefixNsArray = null;
+  private List<Integer> prefixNsArray;
 
   public static final String JSON_PROPERTY_PREFIX_NS_WRAPPED_ARRAY = "prefix_ns_wrapped_array";
   @JsonProperty(JSON_PROPERTY_PREFIX_NS_WRAPPED_ARRAY)
-  private List<Integer> prefixNsWrappedArray = null;
+  private List<Integer> prefixNsWrappedArray;
 
   public XmlItem attributeString(String attributeString) {
     this.attributeString = attributeString;
@@ -264,7 +264,7 @@ public class XmlItem   {
 
   public XmlItem addWrappedArrayItem(Integer wrappedArrayItem) {
     if (this.wrappedArray == null) {
-      this.wrappedArray = new ArrayList<Integer>();
+      this.wrappedArray = new ArrayList<>();
     }
     this.wrappedArray.add(wrappedArrayItem);
     return this;
@@ -372,7 +372,7 @@ public class XmlItem   {
 
   public XmlItem addNameArrayItem(Integer nameArrayItem) {
     if (this.nameArray == null) {
-      this.nameArray = new ArrayList<Integer>();
+      this.nameArray = new ArrayList<>();
     }
     this.nameArray.add(nameArrayItem);
     return this;
@@ -400,7 +400,7 @@ public class XmlItem   {
 
   public XmlItem addNameWrappedArrayItem(Integer nameWrappedArrayItem) {
     if (this.nameWrappedArray == null) {
-      this.nameWrappedArray = new ArrayList<Integer>();
+      this.nameWrappedArray = new ArrayList<>();
     }
     this.nameWrappedArray.add(nameWrappedArrayItem);
     return this;
@@ -508,7 +508,7 @@ public class XmlItem   {
 
   public XmlItem addPrefixArrayItem(Integer prefixArrayItem) {
     if (this.prefixArray == null) {
-      this.prefixArray = new ArrayList<Integer>();
+      this.prefixArray = new ArrayList<>();
     }
     this.prefixArray.add(prefixArrayItem);
     return this;
@@ -536,7 +536,7 @@ public class XmlItem   {
 
   public XmlItem addPrefixWrappedArrayItem(Integer prefixWrappedArrayItem) {
     if (this.prefixWrappedArray == null) {
-      this.prefixWrappedArray = new ArrayList<Integer>();
+      this.prefixWrappedArray = new ArrayList<>();
     }
     this.prefixWrappedArray.add(prefixWrappedArrayItem);
     return this;
@@ -644,7 +644,7 @@ public class XmlItem   {
 
   public XmlItem addNamespaceArrayItem(Integer namespaceArrayItem) {
     if (this.namespaceArray == null) {
-      this.namespaceArray = new ArrayList<Integer>();
+      this.namespaceArray = new ArrayList<>();
     }
     this.namespaceArray.add(namespaceArrayItem);
     return this;
@@ -672,7 +672,7 @@ public class XmlItem   {
 
   public XmlItem addNamespaceWrappedArrayItem(Integer namespaceWrappedArrayItem) {
     if (this.namespaceWrappedArray == null) {
-      this.namespaceWrappedArray = new ArrayList<Integer>();
+      this.namespaceWrappedArray = new ArrayList<>();
     }
     this.namespaceWrappedArray.add(namespaceWrappedArrayItem);
     return this;
@@ -780,7 +780,7 @@ public class XmlItem   {
 
   public XmlItem addPrefixNsArrayItem(Integer prefixNsArrayItem) {
     if (this.prefixNsArray == null) {
-      this.prefixNsArray = new ArrayList<Integer>();
+      this.prefixNsArray = new ArrayList<>();
     }
     this.prefixNsArray.add(prefixNsArrayItem);
     return this;
@@ -808,7 +808,7 @@ public class XmlItem   {
 
   public XmlItem addPrefixNsWrappedArrayItem(Integer prefixNsWrappedArrayItem) {
     if (this.prefixNsWrappedArray == null) {
-      this.prefixNsWrappedArray = new ArrayList<Integer>();
+      this.prefixNsWrappedArray = new ArrayList<>();
     }
     this.prefixNsWrappedArray.add(prefixNsWrappedArrayItem);
     return this;
@@ -839,42 +839,41 @@ public class XmlItem   {
       return false;
     }
     XmlItem xmlItem = (XmlItem) o;
-    return Objects.equals(this.attributeString, xmlItem.attributeString) &&
-        Objects.equals(this.attributeNumber, xmlItem.attributeNumber) &&
-        Objects.equals(this.attributeInteger, xmlItem.attributeInteger) &&
-        Objects.equals(this.attributeBoolean, xmlItem.attributeBoolean) &&
-        Objects.equals(this.wrappedArray, xmlItem.wrappedArray) &&
-        Objects.equals(this.nameString, xmlItem.nameString) &&
-        Objects.equals(this.nameNumber, xmlItem.nameNumber) &&
-        Objects.equals(this.nameInteger, xmlItem.nameInteger) &&
-        Objects.equals(this.nameBoolean, xmlItem.nameBoolean) &&
-        Objects.equals(this.nameArray, xmlItem.nameArray) &&
-        Objects.equals(this.nameWrappedArray, xmlItem.nameWrappedArray) &&
-        Objects.equals(this.prefixString, xmlItem.prefixString) &&
-        Objects.equals(this.prefixNumber, xmlItem.prefixNumber) &&
-        Objects.equals(this.prefixInteger, xmlItem.prefixInteger) &&
-        Objects.equals(this.prefixBoolean, xmlItem.prefixBoolean) &&
-        Objects.equals(this.prefixArray, xmlItem.prefixArray) &&
-        Objects.equals(this.prefixWrappedArray, xmlItem.prefixWrappedArray) &&
-        Objects.equals(this.namespaceString, xmlItem.namespaceString) &&
-        Objects.equals(this.namespaceNumber, xmlItem.namespaceNumber) &&
-        Objects.equals(this.namespaceInteger, xmlItem.namespaceInteger) &&
-        Objects.equals(this.namespaceBoolean, xmlItem.namespaceBoolean) &&
-        Objects.equals(this.namespaceArray, xmlItem.namespaceArray) &&
-        Objects.equals(this.namespaceWrappedArray, xmlItem.namespaceWrappedArray) &&
-        Objects.equals(this.prefixNsString, xmlItem.prefixNsString) &&
-        Objects.equals(this.prefixNsNumber, xmlItem.prefixNsNumber) &&
-        Objects.equals(this.prefixNsInteger, xmlItem.prefixNsInteger) &&
-        Objects.equals(this.prefixNsBoolean, xmlItem.prefixNsBoolean) &&
-        Objects.equals(this.prefixNsArray, xmlItem.prefixNsArray) &&
-        Objects.equals(this.prefixNsWrappedArray, xmlItem.prefixNsWrappedArray);
+    return Objects.equals(attributeString, xmlItem.attributeString) &&
+        Objects.equals(attributeNumber, xmlItem.attributeNumber) &&
+        Objects.equals(attributeInteger, xmlItem.attributeInteger) &&
+        Objects.equals(attributeBoolean, xmlItem.attributeBoolean) &&
+        Objects.equals(wrappedArray, xmlItem.wrappedArray) &&
+        Objects.equals(nameString, xmlItem.nameString) &&
+        Objects.equals(nameNumber, xmlItem.nameNumber) &&
+        Objects.equals(nameInteger, xmlItem.nameInteger) &&
+        Objects.equals(nameBoolean, xmlItem.nameBoolean) &&
+        Objects.equals(nameArray, xmlItem.nameArray) &&
+        Objects.equals(nameWrappedArray, xmlItem.nameWrappedArray) &&
+        Objects.equals(prefixString, xmlItem.prefixString) &&
+        Objects.equals(prefixNumber, xmlItem.prefixNumber) &&
+        Objects.equals(prefixInteger, xmlItem.prefixInteger) &&
+        Objects.equals(prefixBoolean, xmlItem.prefixBoolean) &&
+        Objects.equals(prefixArray, xmlItem.prefixArray) &&
+        Objects.equals(prefixWrappedArray, xmlItem.prefixWrappedArray) &&
+        Objects.equals(namespaceString, xmlItem.namespaceString) &&
+        Objects.equals(namespaceNumber, xmlItem.namespaceNumber) &&
+        Objects.equals(namespaceInteger, xmlItem.namespaceInteger) &&
+        Objects.equals(namespaceBoolean, xmlItem.namespaceBoolean) &&
+        Objects.equals(namespaceArray, xmlItem.namespaceArray) &&
+        Objects.equals(namespaceWrappedArray, xmlItem.namespaceWrappedArray) &&
+        Objects.equals(prefixNsString, xmlItem.prefixNsString) &&
+        Objects.equals(prefixNsNumber, xmlItem.prefixNsNumber) &&
+        Objects.equals(prefixNsInteger, xmlItem.prefixNsInteger) &&
+        Objects.equals(prefixNsBoolean, xmlItem.prefixNsBoolean) &&
+        Objects.equals(prefixNsArray, xmlItem.prefixNsArray) &&
+        Objects.equals(prefixNsWrappedArray, xmlItem.prefixNsWrappedArray);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(attributeString, attributeNumber, attributeInteger, attributeBoolean, wrappedArray, nameString, nameNumber, nameInteger, nameBoolean, nameArray, nameWrappedArray, prefixString, prefixNumber, prefixInteger, prefixBoolean, prefixArray, prefixWrappedArray, namespaceString, namespaceNumber, namespaceInteger, namespaceBoolean, namespaceArray, namespaceWrappedArray, prefixNsString, prefixNsNumber, prefixNsInteger, prefixNsBoolean, prefixNsArray, prefixNsWrappedArray);
   }
-
 
   @Override
   public String toString() {

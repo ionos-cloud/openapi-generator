@@ -4,6 +4,7 @@ All URIs are relative to *http://petstore.swagger.io:80/v2*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
+| [**fake_big_decimal_map**](FakeApi.md#fake_big_decimal_map) | **GET** /fake/BigDecimalMap |  |
 | [**fake_health_get**](FakeApi.md#fake_health_get) | **GET** /fake/health | Health check endpoint |
 | [**fake_http_signature_test**](FakeApi.md#fake_http_signature_test) | **GET** /fake/http-signature-test | test http signature authentication |
 | [**fake_outer_boolean_serialize**](FakeApi.md#fake_outer_boolean_serialize) | **POST** /fake/outer/boolean |  |
@@ -20,7 +21,68 @@ All URIs are relative to *http://petstore.swagger.io:80/v2*
 | [**test_group_parameters**](FakeApi.md#test_group_parameters) | **DELETE** /fake | Fake endpoint to test group parameters (optional) |
 | [**test_inline_additional_properties**](FakeApi.md#test_inline_additional_properties) | **POST** /fake/inline-additionalProperties | test inline additionalProperties |
 | [**test_json_form_data**](FakeApi.md#test_json_form_data) | **GET** /fake/jsonFormData | test json serialization of form data |
-| [**test_query_parameter_collection_format**](FakeApi.md#test_query_parameter_collection_format) | **PUT** /fake/test-query-paramters |  |
+| [**test_query_parameter_collection_format**](FakeApi.md#test_query_parameter_collection_format) | **PUT** /fake/test-query-parameters |  |
+
+
+## fake_big_decimal_map
+
+> <FakeBigDecimalMap200Response> fake_big_decimal_map
+
+
+
+for Java apache and Java native, test toUrlQueryString for maps with BegDecimal keys
+
+### Examples
+
+```ruby
+require 'time'
+require 'petstore'
+
+api_instance = Petstore::FakeApi.new
+
+begin
+  
+  result = api_instance.fake_big_decimal_map
+  p result
+rescue Petstore::ApiError => e
+  puts "Error when calling FakeApi->fake_big_decimal_map: #{e}"
+end
+```
+
+#### Using the fake_big_decimal_map_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<FakeBigDecimalMap200Response>, Integer, Hash)> fake_big_decimal_map_with_http_info
+
+```ruby
+begin
+  
+  data, status_code, headers = api_instance.fake_big_decimal_map_with_http_info
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <FakeBigDecimalMap200Response>
+rescue Petstore::ApiError => e
+  puts "Error when calling FakeApi->fake_big_decimal_map_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**FakeBigDecimalMap200Response**](FakeBigDecimalMap200Response.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
 
 
 ## fake_health_get
@@ -852,6 +914,7 @@ opts = {
   enum_query_string: '_abc', # String | Query parameter enum test (string)
   enum_query_integer: 1, # Integer | Query parameter enum test (double)
   enum_query_double: 1.1, # Float | Query parameter enum test (double)
+  enum_query_model_array: [Petstore::EnumClass::ABC], # Array<EnumClass> | 
   enum_form_string_array: ['>'], # Array<String> | Form parameter enum test (string array)
   enum_form_string: '_abc' # String | Form parameter enum test (string)
 }
@@ -892,6 +955,7 @@ end
 | **enum_query_string** | **String** | Query parameter enum test (string) | [optional][default to &#39;-efg&#39;] |
 | **enum_query_integer** | **Integer** | Query parameter enum test (double) | [optional] |
 | **enum_query_double** | **Float** | Query parameter enum test (double) | [optional] |
+| **enum_query_model_array** | [**Array&lt;EnumClass&gt;**](EnumClass.md) |  | [optional] |
 | **enum_form_string_array** | [**Array&lt;String&gt;**](String.md) | Form parameter enum test (string array) | [optional][default to &#39;$&#39;] |
 | **enum_form_string** | **String** | Form parameter enum test (string) | [optional][default to &#39;-efg&#39;] |
 
@@ -911,7 +975,7 @@ No authorization required
 
 ## test_group_parameters
 
-> test_group_parameters(required_string_group, required_boolean_group, required_int64_group, opts)
+> test_group_parameters(opts)
 
 Fake endpoint to test group parameters (optional)
 
@@ -929,18 +993,18 @@ Petstore.configure do |config|
 end
 
 api_instance = Petstore::FakeApi.new
-required_string_group = 56 # Integer | Required String in group parameters
-required_boolean_group = true # Boolean | Required Boolean in group parameters
-required_int64_group = 789 # Integer | Required Integer in group parameters
 opts = {
-  string_group: 56, # Integer | String in group parameters
-  boolean_group: true, # Boolean | Boolean in group parameters
-  int64_group: 789 # Integer | Integer in group parameters
+    required_string_group: 56, # Integer | Required String in group parameters (required)
+    required_boolean_group: true, # Boolean | Required Boolean in group parameters (required)
+    required_int64_group: 789, # Integer | Required Integer in group parameters (required)
+    string_group: 56, # Integer | String in group parameters
+    boolean_group: true, # Boolean | Boolean in group parameters
+    int64_group: 789, # Integer | Integer in group parameters
 }
 
 begin
   # Fake endpoint to test group parameters (optional)
-  api_instance.test_group_parameters(required_string_group, required_boolean_group, required_int64_group, opts)
+  api_instance.test_group_parameters(opts)
 rescue Petstore::ApiError => e
   puts "Error when calling FakeApi->test_group_parameters: #{e}"
 end
@@ -950,12 +1014,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> test_group_parameters_with_http_info(required_string_group, required_boolean_group, required_int64_group, opts)
+> <Array(nil, Integer, Hash)> test_group_parameters_with_http_info(opts)
 
 ```ruby
 begin
   # Fake endpoint to test group parameters (optional)
-  data, status_code, headers = api_instance.test_group_parameters_with_http_info(required_string_group, required_boolean_group, required_int64_group, opts)
+  data, status_code, headers = api_instance.test_group_parameters_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -994,6 +1058,8 @@ nil (empty response body)
 > test_inline_additional_properties(request_body)
 
 test inline additionalProperties
+
+
 
 ### Examples
 
@@ -1056,6 +1122,8 @@ No authorization required
 
 test json serialization of form data
 
+
+
 ### Examples
 
 ```ruby
@@ -1115,7 +1183,7 @@ No authorization required
 
 ## test_query_parameter_collection_format
 
-> test_query_parameter_collection_format(pipe, ioutil, http, url, context)
+> test_query_parameter_collection_format(pipe, ioutil, http, url, context, allow_empty, opts)
 
 
 
@@ -1133,10 +1201,14 @@ ioutil = ['inner_example'] # Array<String> |
 http = ['inner_example'] # Array<String> | 
 url = ['inner_example'] # Array<String> | 
 context = ['inner_example'] # Array<String> | 
+allow_empty = 'allow_empty_example' # String | 
+opts = {
+  language: { key: 'inner_example'} # Hash<String, String> | 
+}
 
 begin
   
-  api_instance.test_query_parameter_collection_format(pipe, ioutil, http, url, context)
+  api_instance.test_query_parameter_collection_format(pipe, ioutil, http, url, context, allow_empty, opts)
 rescue Petstore::ApiError => e
   puts "Error when calling FakeApi->test_query_parameter_collection_format: #{e}"
 end
@@ -1146,12 +1218,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> test_query_parameter_collection_format_with_http_info(pipe, ioutil, http, url, context)
+> <Array(nil, Integer, Hash)> test_query_parameter_collection_format_with_http_info(pipe, ioutil, http, url, context, allow_empty, opts)
 
 ```ruby
 begin
   
-  data, status_code, headers = api_instance.test_query_parameter_collection_format_with_http_info(pipe, ioutil, http, url, context)
+  data, status_code, headers = api_instance.test_query_parameter_collection_format_with_http_info(pipe, ioutil, http, url, context, allow_empty, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -1169,6 +1241,8 @@ end
 | **http** | [**Array&lt;String&gt;**](String.md) |  |  |
 | **url** | [**Array&lt;String&gt;**](String.md) |  |  |
 | **context** | [**Array&lt;String&gt;**](String.md) |  |  |
+| **allow_empty** | **String** |  |  |
+| **language** | [**Hash&lt;String, String&gt;**](String.md) |  | [optional] |
 
 ### Return type
 

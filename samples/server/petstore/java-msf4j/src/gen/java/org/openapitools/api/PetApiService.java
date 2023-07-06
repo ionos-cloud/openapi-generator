@@ -7,6 +7,7 @@ import org.wso2.msf4j.formparam.FormDataParam;
 import org.wso2.msf4j.formparam.FileInfo;
 
 import java.io.File;
+import java.util.List;
 import org.openapitools.model.ModelApiResponse;
 import org.openapitools.model.Pet;
 import java.util.Set;
@@ -40,6 +41,6 @@ public abstract class PetApiService {
  ) throws NotFoundException;
     public abstract Response uploadFile(Long petId
  ,String additionalMetadata
- ,InputStream fileInputStream, FileInfo fileDetail
+ ,InputStream _fileInputStream, FileInfo _fileDetail
  ) throws NotFoundException;
 }

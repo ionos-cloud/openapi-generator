@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/GIT_USER_ID/GIT_REPO_ID/handlers"
+	"gitlab.com/openapitools/petstore/handlers"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -15,7 +15,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	
+
 
 	// AddPet - Add a new pet to the store
 	e.POST("/v2/pet", c.AddPet)

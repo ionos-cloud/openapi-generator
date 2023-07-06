@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.jaxrs.*;
 
 import java.io.File;
+import java.util.List;
 import org.openapitools.model.ModelApiResponse;
 import org.openapitools.model.Pet;
 import java.util.Set;
@@ -185,10 +186,10 @@ public class PetApi  {
     public Response uploadFile(@ApiParam(value = "ID of pet to update",required=true) @PathParam("petId") Long petId
 ,@ApiParam(value = "Additional data to pass to server")@FormDataParam("additionalMetadata")  String additionalMetadata
 ,
-            @FormDataParam("file") InputStream fileInputStream,
-            @FormDataParam("file") FileInfo fileDetail
+            @FormDataParam("file") InputStream _fileInputStream,
+            @FormDataParam("file") FileInfo _fileDetail
 )
     throws NotFoundException {
-        return delegate.uploadFile(petId,additionalMetadata,fileInputStream, fileDetail);
+        return delegate.uploadFile(petId,additionalMetadata,_fileInputStream, _fileDetail);
     }
 }

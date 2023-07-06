@@ -177,6 +177,8 @@ class FakeApi extends Controller
 
         $enum_query_double = $input['enum_query_double'];
 
+        $enum_query_model_array = $input['enum_query_model_array'];
+
         $enum_form_string_array = $input['enum_form_string_array'];
 
         $enum_form_string = $input['enum_form_string'];
@@ -223,6 +225,25 @@ class FakeApi extends Controller
 
 
         return response('How about implementing testGroupParameters as a delete method ?');
+    }
+    /**
+     * Operation fakeBigDecimalMap
+     *
+     * .
+     *
+     *
+     * @return Http response
+     */
+    public function fakeBigDecimalMap()
+    {
+        $input = Request::all();
+
+        //path params validation
+
+
+        //not path params validation
+
+        return response('How about implementing fakeBigDecimalMap as a get method ?');
     }
     /**
      * Operation testBodyWithBinary
@@ -549,6 +570,13 @@ class FakeApi extends Controller
             throw new \InvalidArgumentException('Missing the required parameter $context when calling testQueryParameterCollectionFormat');
         }
         $context = $input['context'];
+
+        if (!isset($input['allow_empty'])) {
+            throw new \InvalidArgumentException('Missing the required parameter $allow_empty when calling testQueryParameterCollectionFormat');
+        }
+        $allow_empty = $input['allow_empty'];
+
+        $language = $input['language'];
 
 
         return response('How about implementing testQueryParameterCollectionFormat as a put method ?');

@@ -65,14 +65,13 @@ public class ClassModel   {
       return false;
     }
     ClassModel classModel = (ClassModel) o;
-    return Objects.equals(this.propertyClass, classModel.propertyClass);
+    return Objects.equals(propertyClass, classModel.propertyClass);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(propertyClass);
   }
-
 
   @Override
   public String toString() {

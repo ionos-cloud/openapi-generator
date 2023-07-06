@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/{{{gitUserId}}}/{{{gitRepoId}}}/handlers"
+	"{{{gitHost}}}/{{{gitUserId}}}/{{{gitRepoId}}}/handlers"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -15,7 +15,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	
+
 {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
 	// {{nickname}} - {{{summary}}}{{#isDeprecated}} (deprecated){{/isDeprecated}}
 	e.{{httpMethod.toUpperCase}}("{{{basePathWithoutHost}}}{{{path}}}", c.{{operationId}})

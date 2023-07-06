@@ -78,7 +78,7 @@ public class EnumArrays   {
       throw new IllegalArgumentException("Unexpected value '" + value + "'");
     }
   }
- 
+
   @JsonProperty("array_enum")
   
   private List<ArrayEnumEnum> arrayEnum = null;
@@ -106,10 +106,10 @@ public class EnumArrays   {
   }
 
   public EnumArrays addArrayEnumItem(ArrayEnumEnum arrayEnumItem) {
-    if (arrayEnum == null) {
-      arrayEnum = new ArrayList<>();
+    if (this.arrayEnum == null) {
+      this.arrayEnum = new ArrayList<>();
     }
-    arrayEnum.add(arrayEnumItem);
+    this.arrayEnum.add(arrayEnumItem);
     return this;
   }
 

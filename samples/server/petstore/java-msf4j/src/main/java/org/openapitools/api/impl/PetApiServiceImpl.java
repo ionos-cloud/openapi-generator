@@ -4,6 +4,7 @@ import org.openapitools.api.*;
 import org.openapitools.model.*;
 
 import java.io.File;
+import java.util.List;
 import org.openapitools.model.ModelApiResponse;
 import org.openapitools.model.Pet;
 import java.util.Set;
@@ -69,7 +70,7 @@ public class PetApiServiceImpl extends PetApiService {
     @Override
     public Response uploadFile(Long petId
 , String additionalMetadata
-, InputStream fileInputStream, FileInfo fileDetail
+, InputStream _fileInputStream, FileInfo _fileDetail
  ) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();

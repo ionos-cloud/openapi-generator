@@ -18,14 +18,21 @@
 #include "Dom/JsonObject.h"
 #include "HttpRetrySystem.h"
 #include "Containers/Ticker.h"
+#include "Runtime/Launch/Resources/Version.h"
 
-namespace OpenAPI 
+namespace OpenAPI
 {
 
 typedef TSharedRef<TJsonWriter<>> JsonWriter;
 using namespace FHttpRetrySystem;
 
-struct OPENAPI_API HttpRetryManager : public FManager, public FTickerObjectBase
+struct OPENAPI_API HttpRetryManager
+	: public FManager
+#if ENGINE_MAJOR_VERSION <= 4
+	, public FTickerObjectBase
+#else
+	, public FTSTickerObjectBase
+#endif
 {
 	using FManager::FManager;
 
@@ -50,7 +57,7 @@ struct OPENAPI_API HttpRetryParams
 };
 
 class OPENAPI_API Model
-{ 
+{
 public:
 	virtual ~Model() {}
 	virtual void WriteJson(JsonWriter& Writer) const = 0;

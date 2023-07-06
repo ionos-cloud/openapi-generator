@@ -39,7 +39,7 @@ Class | Method | HTTP request | Description
 *FakeAPI* | [**testGroupParameters**](docs/FakeAPI.md#testgroupparameters) | **DELETE** /fake | Fake endpoint to test group parameters (optional)
 *FakeAPI* | [**testInlineAdditionalProperties**](docs/FakeAPI.md#testinlineadditionalproperties) | **POST** /fake/inline-additionalProperties | test inline additionalProperties
 *FakeAPI* | [**testJsonFormData**](docs/FakeAPI.md#testjsonformdata) | **GET** /fake/jsonFormData | test json serialization of form data
-*FakeAPI* | [**testQueryParameterCollectionFormat**](docs/FakeAPI.md#testqueryparametercollectionformat) | **PUT** /fake/test-query-paramters | 
+*FakeAPI* | [**testQueryParameterCollectionFormat**](docs/FakeAPI.md#testqueryparametercollectionformat) | **PUT** /fake/test-query-parameters | 
 *FakeClassnameTags123API* | [**testClassname**](docs/FakeClassnameTags123API.md#testclassname) | **PATCH** /fake_classname_test | To test class name in snake case
 *PetAPI* | [**addPet**](docs/PetAPI.md#addpet) | **POST** /pet | Add a new pet to the store
 *PetAPI* | [**deletePet**](docs/PetAPI.md#deletepet) | **DELETE** /pet/{petId} | Deletes a pet
@@ -81,15 +81,12 @@ Class | Method | HTTP request | Description
  - [ArrayOfNumberOnly](docs/ArrayOfNumberOnly.md)
  - [ArrayTest](docs/ArrayTest.md)
  - [BigCat](docs/BigCat.md)
- - [BigCatAllOf](docs/BigCatAllOf.md)
  - [Capitalization](docs/Capitalization.md)
  - [Cat](docs/Cat.md)
- - [CatAllOf](docs/CatAllOf.md)
  - [Category](docs/Category.md)
  - [ClassModel](docs/ClassModel.md)
  - [Client](docs/Client.md)
  - [Dog](docs/Dog.md)
- - [DogAllOf](docs/DogAllOf.md)
  - [EnumArrays](docs/EnumArrays.md)
  - [EnumClass](docs/EnumClass.md)
  - [EnumTest](docs/EnumTest.md)
@@ -118,26 +115,13 @@ Class | Method | HTTP request | Description
  - [XmlItem](docs/XmlItem.md)
 
 
+<a id="documentation-for-authorization"></a>
 ## Documentation For Authorization
 
 
-## api_key
-
-- **Type**: API key
-- **API key parameter name**: api_key
-- **Location**: HTTP header
-
-## api_key_query
-
-- **Type**: API key
-- **API key parameter name**: api_key_query
-- **Location**: URL query string
-
-## http_basic_test
-
-- **Type**: HTTP basic authentication
-
-## petstore_auth
+Authentication schemes defined for the API:
+<a id="petstore_auth"></a>
+### petstore_auth
 
 - **Type**: OAuth
 - **Flow**: implicit
@@ -145,6 +129,25 @@ Class | Method | HTTP request | Description
 - **Scopes**: 
  - **write:pets**: modify pets in your account
  - **read:pets**: read your pets
+
+<a id="api_key"></a>
+### api_key
+
+- **Type**: API key
+- **API key parameter name**: api_key
+- **Location**: HTTP header
+
+<a id="api_key_query"></a>
+### api_key_query
+
+- **Type**: API key
+- **API key parameter name**: api_key_query
+- **Location**: URL query string
+
+<a id="http_basic_test"></a>
+### http_basic_test
+
+- **Type**: HTTP basic authentication
 
 
 ## Author

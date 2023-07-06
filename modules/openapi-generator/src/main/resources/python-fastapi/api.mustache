@@ -1,6 +1,11 @@
 # coding: utf-8
 
 from typing import Dict, List  # noqa: F401
+import importlib
+import pkgutil
+
+from {{apiPackage}}.{{classFilename}}_{{baseSuffix}} import Base{{classname}}
+import {{fastapiImplementationPackage}}
 
 from fastapi import (  # noqa: F401
     APIRouter,
@@ -24,6 +29,10 @@ from {{modelPackage}}.extra_models import TokenModel  # noqa: F401
 
 router = APIRouter()
 
+ns_pkg = {{fastapiImplementationPackage}}
+for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
+    importlib.import_module(name)
+
 
 {{#operations}}
 {{#operation}}
@@ -36,11 +45,12 @@ router = APIRouter()
     },
     tags=[{{#tags}}"{{name}}"{{^-last}},{{/-last}}{{/tags}}],
     {{#summary}}
-    summary="{{summary}}",
+    summary="{{.}}",
     {{/summary}}
     {{#description}}
-    description = "{{description}}",
+    description = "{{.}}",
     {{/description}}
+    response_model_by_alias=True,
 )
 async def {{operationId}}(
     {{#allParams}}
@@ -53,9 +63,9 @@ async def {{operationId}}(
     ),
     {{/authMethods}}
     {{/hasAuthMethods}}
-) -> {{#returnType}}{{.}}{{/returnType}}{{^returnType}}None{{/returnType}}:
+) -> {{returnType}}{{^returnType}}None{{/returnType}}:
     {{#notes}}"""{{.}}"""
-    ...{{/notes}}{{^notes}}...{{/notes}}
+    return Base{{classname}}.subclasses[0]().{{operationId}}({{#allParams}}{{>impl_argument}}{{^-last}}, {{/-last}}{{/allParams}}){{/notes}}{{^notes}}...{{/notes}}
 {{^-last}}
 
 

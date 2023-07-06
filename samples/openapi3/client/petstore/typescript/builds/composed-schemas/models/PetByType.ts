@@ -35,11 +35,14 @@ export class PetByType {
     static getAttributeTypeMap() {
         return PetByType.attributeTypeMap;
     }
-    
+
     public constructor() {
     }
 }
 
 
-export type PetByTypePetTypeEnum = "Cat" | "Dog" ;
+export enum PetByTypePetTypeEnum {
+    Cat = 'Cat',
+    Dog = 'Dog'
+}
 

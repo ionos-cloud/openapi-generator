@@ -13,7 +13,6 @@ import javax.validation.constraints.*;
 import io.swagger.annotations.*;
 import java.util.Objects;
 
-import javax.xml.bind.annotation.*;
 
 @ApiModel(description = "A category for a pet")
 public class Category   {
@@ -21,7 +20,6 @@ public class Category   {
   private Long id;
 
   private String name;
-
 
   /**
    **/
@@ -51,7 +49,7 @@ public class Category   {
   
   @ApiModelProperty(value = "")
   @JsonProperty("name")
-  public String getName() {
+ @Pattern(regexp="^[a-zA-Z0-9]+[a-zA-Z0-9\\.\\-_]*[a-zA-Z0-9]+$")  public String getName() {
     return name;
   }
   public void setName(String name) {

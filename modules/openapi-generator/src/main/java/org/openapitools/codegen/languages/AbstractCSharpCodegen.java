@@ -17,15 +17,20 @@
 
 package org.openapitools.codegen.languages;
 
-import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableMap;
 import com.samskivert.mustache.Mustache.Lambda;
+import com.samskivert.mustache.Mustache;
+import com.samskivert.mustache.Template;
 
-import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.*;
+import org.openapitools.codegen.model.ModelMap;
+import org.openapitools.codegen.model.ModelsMap;
+import org.openapitools.codegen.model.OperationMap;
+import org.openapitools.codegen.model.OperationsMap;
 import org.openapitools.codegen.templating.mustache.*;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.slf4j.Logger;
@@ -33,8 +38,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static org.openapitools.codegen.utils.CamelizeOption.LOWERCASE_FIRST_LETTER;
 import static org.openapitools.codegen.utils.StringUtils.camelize;
 
 public abstract class AbstractCSharpCodegen extends DefaultCodegen implements CodegenConfig {
@@ -63,12 +71,17 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
     protected String packageCompany = "OpenAPI";
     protected String packageCopyright = "No Copyright";
     protected String packageAuthors = "OpenAPI";
+    public static final String DATE_FORMAT = "dateFormat";
+    protected String dateFormat = "yyyy'-'MM'-'dd";
+    public static final String DATETIME_FORMAT = "dateTimeFormat";
+    protected String dateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK";
 
     protected String interfacePrefix = "I";
     protected String enumNameSuffix = "Enum";
     protected String enumValueSuffix = "Enum";
 
     protected String sourceFolder = "src";
+    protected String invalidNamePrefix = "var";
 
     // TODO: Add option for test folder output location. Nice to allow e.g. ./test instead of ./src.
     //       This would require updating relative paths (e.g. path to main project file in test project file)
@@ -80,15 +93,16 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
     // true if support nullable type
     protected boolean supportNullable = Boolean.FALSE;
 
-    // nullable type
-    protected Set<String> nullableType = new HashSet<String>();
-
-    protected Set<String> valueTypes = new HashSet<String>();
+    protected Boolean zeroBasedEnums = null;
+    protected static final String zeroBasedEnumVendorExtension = "x-zero-based-enum";
 
     private final Logger LOGGER = LoggerFactory.getLogger(AbstractCSharpCodegen.class);
 
     // special property keywords not allowed as these are the function names in the model files
     protected Set<String> propertySpecialKeywords = new HashSet<>(Arrays.asList("ToString", "ToJson", "GetHashCode", "Equals", "ShouldSerializeToString"));
+
+    // A cache to efficiently lookup schema `toModelName()` based on the schema Key
+    private Map<String, String> schemaKeyToModelNameCache = new HashMap<>();
 
     public AbstractCSharpCodegen() {
         super();
@@ -101,15 +115,15 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         outputFolder = "generated-code" + File.separator + this.getName();
         embeddedTemplateDir = templateDir = this.getName();
 
-        collectionTypes = new HashSet<String>(
+        collectionTypes = new HashSet<>(
                 Arrays.asList(
                         "IList", "List",
                         "ICollection", "Collection",
                         "IEnumerable")
         );
 
-        mapTypes = new HashSet<String>(
-                Arrays.asList("IDictionary")
+        mapTypes = new HashSet<>(
+                Arrays.asList("IDictionary", "Dictionary")
         );
 
         // NOTE: C# uses camel cased reserved words, while models are title cased. We don't want lowercase comparisons.
@@ -138,7 +152,7 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         );
 
         // TODO: Either include fully qualified names here or handle in DefaultCodegen via lastIndexOf(".") search
-        languageSpecificPrimitives = new HashSet<String>(
+        languageSpecificPrimitives = new HashSet<>(
                 Arrays.asList(
                         "String",
                         "string",
@@ -150,8 +164,12 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
                         "decimal",
                         "int?",
                         "int",
+                        "uint",
+                        "uint?",
                         "long?",
                         "long",
+                        "ulong",
+                        "ulong?",
                         "float?",
                         "float",
                         "byte[]",
@@ -179,38 +197,10 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         instantiationTypes.put("list", "List");
         instantiationTypes.put("map", "Dictionary");
 
+        this.setSortParamsByRequiredFlag(true);
 
-        // Nullable types here assume C# 2 support is not part of base
-        typeMapping = new HashMap<String, String>();
-        typeMapping.put("string", "string");
-        typeMapping.put("binary", "byte[]");
-        typeMapping.put("ByteArray", "byte[]");
-        typeMapping.put("boolean", "bool?");
-        typeMapping.put("integer", "int?");
-        typeMapping.put("float", "float?");
-        typeMapping.put("long", "long?");
-        typeMapping.put("double", "double?");
-        typeMapping.put("number", "decimal?");
-        typeMapping.put("BigDecimal", "decimal?");
-        typeMapping.put("DateTime", "DateTime?");
-        typeMapping.put("date", "DateTime?");
-        typeMapping.put("file", "System.IO.Stream");
-        typeMapping.put("array", "List");
-        typeMapping.put("list", "List");
-        typeMapping.put("map", "Dictionary");
-        typeMapping.put("object", "Object");
-        typeMapping.put("UUID", "Guid?");
-        typeMapping.put("URI", "string");
-        typeMapping.put("AnyType", "Object");
-
-        // nullable type
-        nullableType = new HashSet<String>(
-                Arrays.asList("decimal", "bool", "int", "float", "long", "double", "DateTime", "DateTimeOffset", "Guid")
-        );
-        // value Types
-        valueTypes = new HashSet<String>(
-                Arrays.asList("decimal", "bool", "int", "float", "long", "double")
-        );
+        // do it only on newer libraries to avoid breaking changes
+        // this.setSortModelPropertiesByRequiredFlag(true);
     }
 
     public void setReturnICollection(boolean returnICollection) {
@@ -220,12 +210,10 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
     public void setUseCollection(boolean useCollection) {
         this.useCollection = useCollection;
         if (useCollection) {
-            typeMapping.put("array", "Collection");
-            typeMapping.put("list", "Collection");
-
             instantiationTypes.put("array", "Collection");
             instantiationTypes.put("list", "Collection");
         }
+        this.setTypeMapping();
     }
 
     public void setOptionalMethodArgumentFlag(boolean flag) {
@@ -238,11 +226,7 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
 
     public void useDateTimeOffset(boolean flag) {
         this.useDateTimeOffsetFlag = flag;
-        if (flag) {
-            typeMapping.put("DateTime", "DateTimeOffset");
-        } else {
-            typeMapping.put("DateTime", "DateTime");
-        }
+        this.setTypeMapping();
     }
 
 
@@ -278,6 +262,9 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         // {{sourceFolder}}
         if (additionalProperties.containsKey(CodegenConstants.SOURCE_FOLDER)) {
             setSourceFolder((String) additionalProperties.get(CodegenConstants.SOURCE_FOLDER));
+
+            // TODO: Move to its own option when a parameter for 'testFolder' is added.
+            setTestFolder((String) additionalProperties.get(CodegenConstants.SOURCE_FOLDER));
         } else {
             additionalProperties.put(CodegenConstants.SOURCE_FOLDER, this.sourceFolder);
         }
@@ -306,6 +293,20 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
             setPackageProductName((String) additionalProperties.get(CodegenConstants.PACKAGE_PRODUCTNAME));
         } else {
             additionalProperties.put(CodegenConstants.PACKAGE_PRODUCTNAME, packageProductName);
+        }
+
+        // {{dateFormat}}
+        if (additionalProperties.containsKey(DATE_FORMAT)) {
+            setDateFormat((String) additionalProperties.get(DATE_FORMAT));
+        } else {
+            additionalProperties.put(DATE_FORMAT, this.dateFormat);
+        }
+
+        // {{dateTimeFormat}}
+        if (additionalProperties.containsKey(DATETIME_FORMAT)) {
+            setDateTimeFormat((String) additionalProperties.get(DATETIME_FORMAT));
+        } else {
+            additionalProperties.put(DATETIME_FORMAT, this.dateTimeFormat);
         }
 
         // {{packageDescription}}
@@ -363,8 +364,11 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
 
         if (additionalProperties.containsKey(CodegenConstants.NULLABLE_REFERENCE_TYPES)) {
             setNullableReferenceTypes(convertPropertyToBooleanAndWriteBack(CodegenConstants.NULLABLE_REFERENCE_TYPES));
-        } else {
-            additionalProperties.put(CodegenConstants.NULLABLE_REFERENCE_TYPES, nullReferenceTypesFlag);
+        }
+
+        String zeroBasedEnums = "zeroBasedEnums";
+        if (additionalProperties.containsKey(zeroBasedEnums)) {
+            setZeroBasedEnums(convertPropertyToBooleanAndWriteBack(zeroBasedEnums));
         }
 
         if (additionalProperties.containsKey(CodegenConstants.INTERFACE_PREFIX)) {
@@ -387,31 +391,107 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
 
         // This either updates additionalProperties with the above fixes, or sets the default if the option was not specified.
         additionalProperties.put(CodegenConstants.INTERFACE_PREFIX, interfacePrefix);
+
+        // add lambda for mustache templates
+        additionalProperties.put("lambdaCref", new Mustache.Lambda() {
+            @Override
+            public void execute(Template.Fragment fragment, Writer writer) throws IOException {
+                String content = fragment.execute();
+                content = content.trim().replace("<", "{");
+                content = content.replace(">", "}");
+                content = content.replace("{string}", "{String}");
+                writer.write(content);
+            }
+        });
+
+        this.setTypeMapping();
     }
 
     @Override
-    protected Builder<String, Lambda> addMustacheLambdas() {
+    protected ImmutableMap.Builder<String, Lambda> addMustacheLambdas() {
         return super.addMustacheLambdas()
-                .put("camelcase_param", new CamelCaseLambda().generator(this).escapeAsParamName(true));
+                .put("camelcase_param", new CamelCaseLambda().generator(this).escapeAsParamName(true))
+                .put("required", new RequiredParameterLambda().generator(this))
+                .put("optional", new OptionalParameterLambda().generator(this))
+                .put("joinWithComma", new JoinWithCommaLambda())
+                .put("trimLineBreaks", new TrimLineBreaksLambda())
+                .put("trimTrailingWhiteSpace", new TrimTrailingWhiteSpaceLambda())
+                .put("first", new FirstLambda());
     }
 
     @Override
     public void postProcessModelProperty(CodegenModel model, CodegenProperty property) {
         super.postProcessModelProperty(model, property);
+        if (property.isInnerEnum && property.items != null) {
+            // format maps of inner enums to include the classname eg: Dictionary<string, MapTest.InnerEnum>
+            property.datatypeWithEnum = property.datatypeWithEnum.replace(property.items.datatypeWithEnum, model.classname + "." + property.items.datatypeWithEnum);
+            property.dataType = property.datatypeWithEnum;
+        }
+
+        if (property.isEnum && !property.vendorExtensions.containsKey(this.zeroBasedEnumVendorExtension)) {
+            if (Boolean.TRUE.equals(this.zeroBasedEnums)) {
+                property.vendorExtensions.put(this.zeroBasedEnumVendorExtension, true);
+            } else if (!Boolean.FALSE.equals(this.zeroBasedEnums)) {
+                if (property.allowableValues.containsKey("values")) {
+                    final List<Object> allowableValues = (List<Object>) property.allowableValues.get("values");
+                    boolean isZeroBased = String.valueOf(allowableValues.get(0)).toLowerCase(Locale.ROOT).equals("unknown");
+                    property.vendorExtensions.put(this.zeroBasedEnumVendorExtension, isZeroBased);
+                }
+            }
+        }
+
+        if (property.isMap || property.isContainer) {
+            // maps of enums will be marked both isMap and isEnum, correct that now
+            property.isEnum = false;
+            property.isInnerEnum = false;
+            property.isString = false;
+        }
     }
 
     @Override
-    public Map<String, Object> postProcessModels(Map<String, Object> objs) {
-        List<Object> models = (List<Object>) objs.get("models");
-        for (Object _mo : models) {
-            Map<String, Object> mo = (Map<String, Object>) _mo;
-            CodegenModel cm = (CodegenModel) mo.get("model");
-            for (CodegenProperty var : cm.vars) {
-                // check to see if model name is same as the property name
-                // which will result in compilation error
-                // if found, prepend with _ to workaround the limitation
-                if (var.name.equalsIgnoreCase(cm.classname)) {
-                    var.name = "_" + var.name;
+    public ModelsMap postProcessModels(ModelsMap objs) {
+        for (ModelMap mo : objs.getModels()) {
+            CodegenModel cm = mo.getModel();
+
+            if (cm.getComposedSchemas() != null) {
+                List<CodegenProperty> oneOf = cm.getComposedSchemas().getOneOf();
+                if (oneOf != null) {
+                    Set<String> dataTypeSet = new HashSet<>();
+                    for (CodegenProperty oneOfProperty : oneOf) {
+                        if (dataTypeSet.contains(oneOfProperty.dataType)) {
+                            // add "x-duplicated-data-type" to indicate if the dataType already occurs before
+                            // in other sub-schemas of allOf/anyOf/oneOf
+                            oneOfProperty.vendorExtensions.putIfAbsent("x-composed-data-type", true);
+                        } else {
+                            dataTypeSet.add(oneOfProperty.dataType);
+                        }
+                    }
+                }
+
+                List<CodegenProperty> anyOf = cm.getComposedSchemas().getAnyOf();
+                if (anyOf != null) {
+                    Set<String> dataTypeSet = new HashSet<>();
+                    for (CodegenProperty anyOfProperty : anyOf) {
+                        if (dataTypeSet.contains(anyOfProperty.dataType)) {
+                            // add "x-duplicated-data-type" to indicate if the dataType already occurs before
+                            // in other sub-schemas of allOf/anyOf/oneOf
+                            anyOfProperty.vendorExtensions.putIfAbsent("x-composed-data-type", true);
+                        } else {
+                            dataTypeSet.add(anyOfProperty.dataType);
+                        }
+                    }
+                }
+            }
+
+            if (cm.isEnum && !cm.vendorExtensions.containsKey(this.zeroBasedEnumVendorExtension)) {
+                if (Boolean.TRUE.equals(this.zeroBasedEnums)) {
+                    cm.vendorExtensions.put(this.zeroBasedEnumVendorExtension, true);
+                } else if (!Boolean.FALSE.equals(this.zeroBasedEnums)) {
+                    if (cm.allowableValues.containsKey("values")) {
+                        final List<Object> allowableValues = (List<Object>) cm.allowableValues.get("values");
+                        boolean isZeroBased = String.valueOf(allowableValues.get(0)).toLowerCase(Locale.ROOT).equals("unknown");
+                        cm.vendorExtensions.put(this.zeroBasedEnumVendorExtension, isZeroBased);
+                    }
                 }
             }
         }
@@ -426,145 +506,188 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
      * @return An in-place modified state of the codegen object model.
      */
     @Override
-    public Map<String, Object> postProcessAllModels(Map<String, Object> objs) {
-        final Map<String, Object> processed = super.postProcessAllModels(objs);
-        postProcessEnumRefs(processed);
-        updateValueTypeProperty(processed);
-        updateNullableTypeProperty(processed);
+    public Map<String, ModelsMap> postProcessAllModels(Map<String, ModelsMap> objs) {
+        final Map<String, ModelsMap> processed = super.postProcessAllModels(objs);
+
+        Map<String, CodegenModel> enumRefs = new HashMap<>();
+        for (Map.Entry<String, ModelsMap> entry : processed.entrySet()) {
+            CodegenModel model = ModelUtils.getModelByName(entry.getKey(), processed);
+
+            // if we don't call setHasDiscriminatorWithNonEmptyMapping then hasDiscriminatorWithNonEmptyMapping will be false, and we need it in the JsonConverter
+            // the checks on oneOf and anyOf must be there or else hasDiscriminatorWithNonEmptyMapping will be true for GrandparentAnimal.
+            // GrandparentAnimal has a discriminator, but no oneOf nor anyOf
+            // modules\openapi-generator\src\test\resources\3_0\csharp\petstore-with-fake-endpoints-models-for-testing-with-http-signature.yaml
+            model.setHasDiscriminatorWithNonEmptyMapping(
+                    ((model.anyOf != null && model.anyOf.size() > 0) || (model.anyOf != null &&model.oneOf.size() > 0)) &&
+                    model.discriminator != null &&
+                    model.discriminator.getMappedModels() != null &&
+                    model.discriminator.getMappedModels().size() > 0);
+
+            if (model.isEnum) {
+                enumRefs.put(model.getClassname(), model);
+            }
+        }
+
+        for (Map.Entry<String, ModelsMap> entry : objs.entrySet()) {
+            CodegenModel model = ModelUtils.getModelByName(entry.getKey(), objs);
+            model.vendorExtensions.put("x-model-is-mutatable", modelIsMutatable(model, null));
+
+            CodegenComposedSchemas composedSchemas = model.getComposedSchemas();
+            if (composedSchemas != null) {
+                List<CodegenProperty> allOf = composedSchemas.getAllOf();
+                if (allOf != null) {
+                    for(CodegenProperty property : allOf) {
+                        property.name = patchPropertyName(model, property.baseType);
+                    }
+                }
+
+                List<CodegenProperty> anyOf = composedSchemas.getAnyOf();
+                if (anyOf != null) {
+                    removePropertiesDeclaredInComposedTypes(objs, model, anyOf);
+                    for(CodegenProperty property : anyOf) {
+                        property.name = patchPropertyName(model, property.baseType);
+                        property.isNullable = true;
+                    }
+                }
+
+                List<CodegenProperty> oneOf = composedSchemas.getOneOf();
+                if (oneOf != null) {
+                    removePropertiesDeclaredInComposedTypes(objs, model, oneOf);
+                    for(CodegenProperty property : oneOf) {
+                        property.name = patchPropertyName(model, property.baseType);
+                        property.isNullable = true;
+                    }
+                }
+            }
+
+            // https://github.com/OpenAPITools/openapi-generator/issues/12324
+            // TODO: why do these collections contain different instances?
+            // fixing allVars should suffice instead of patching every collection
+            for (CodegenProperty property : model.allVars) {
+                patchProperty(enumRefs, model, property);
+            }
+            for (CodegenProperty property : model.vars) {
+                patchProperty(enumRefs, model, property);
+            }
+            for (CodegenProperty property : model.readWriteVars) {
+                patchProperty(enumRefs, model, property);
+            }
+            for (CodegenProperty property : model.optionalVars) {
+                patchProperty(enumRefs, model, property);
+            }
+            for (CodegenProperty property : model.parentVars) {
+                patchProperty(enumRefs, model, property);
+            }
+            for (CodegenProperty property : model.requiredVars) {
+                patchProperty(enumRefs, model, property);
+            }
+            for (CodegenProperty property : model.readOnlyVars) {
+                patchProperty(enumRefs, model, property);
+            }
+            for (CodegenProperty property : model.nonNullableVars) {
+                patchProperty(enumRefs, model, property);
+            }
+        }
         return processed;
     }
 
     /**
-     * C# differs from other languages in that Enums are not _true_ objects; enums are compiled to integral types.
-     * So, in C#, an enum is considers more like a user-defined primitive.
-     * <p>
-     * When working with enums, we can't always assume a RefModel is a nullable type (where default(YourType) == null),
-     * so this post processing runs through all models to find RefModel'd enums. Then, it runs through all vars and modifies
-     * those vars referencing RefModel'd enums to work the same as inlined enums rather than as objects.
-     *
-     * @param models processed models to be further processed for enum references
+     *  Returns true if the model contains any properties with a public setter
+     *  If true, the model's constructor accessor should be made public to ensure end users
+     *  can instantiate the object. If false, then the model is only ever given
+     *  to us by the server, so we do not need a public constructor
      */
-    @SuppressWarnings({"unchecked"})
-    private void postProcessEnumRefs(final Map<String, Object> models) {
-        Map<String, CodegenModel> enumRefs = new HashMap<String, CodegenModel>();
-        for (Map.Entry<String, Object> entry : models.entrySet()) {
-            CodegenModel model = ModelUtils.getModelByName(entry.getKey(), models);
-            if (model.isEnum) {
-                enumRefs.put(entry.getKey(), model);
+    private boolean modelIsMutatable(CodegenModel model, Set<String> processed) {
+        if (processed == null) {
+            processed = new HashSet<String>();
+        }
+        Boolean isMutatable = model.allVars.stream().anyMatch(v -> !v.isReadOnly);
+        if (!isMutatable && !processed.contains(model.classname) && model.getDiscriminator() != null && model.getDiscriminator().getMappedModels() != null) {
+            processed.add(model.classname);
+            for (CodegenDiscriminator.MappedModel mappedModel : model.getDiscriminator().getMappedModels()) {
+                isMutatable = modelIsMutatable(model, processed);
             }
         }
 
-        for (Map.Entry<String, Object> entry : models.entrySet()) {
-            String openAPIName = entry.getKey();
-            CodegenModel model = ModelUtils.getModelByName(openAPIName, models);
-            if (model != null) {
-                for (CodegenProperty var : model.allVars) {
-                    if (enumRefs.containsKey(var.dataType)) {
-                        // Handle any enum properties referred to by $ref.
-                        // This is different in C# than most other generators, because enums in C# are compiled to integral types,
-                        // while enums in many other languages are true objects.
-                        CodegenModel refModel = enumRefs.get(var.dataType);
-                        var.allowableValues = refModel.allowableValues;
-                        var.isEnum = true;
+        return isMutatable;
+    }
 
-                        // We do these after updateCodegenPropertyEnum to avoid generalities that don't mesh with C#.
-                        var.isPrimitiveType = true;
-                    }
-                }
-                for (CodegenProperty var : model.vars) {
-                    if (enumRefs.containsKey(var.dataType)) {
-                        // Handle any enum properties referred to by $ref.
-                        // This is different in C# than most other generators, because enums in C# are compiled to integral types,
-                        // while enums in many other languages are true objects.
-                        CodegenModel refModel = enumRefs.get(var.dataType);
-                        var.allowableValues = refModel.allowableValues;
-                        var.isEnum = true;
+    protected void removePropertiesDeclaredInComposedTypes(Map<String, ModelsMap> objs, CodegenModel model, List<CodegenProperty> composedProperties) {
+    }
 
-                        // We do these after updateCodegenPropertyEnum to avoid generalities that don't mesh with C#.
-                        var.isPrimitiveType = true;
-                    }
-                }
-                for (CodegenProperty var : model.readWriteVars) {
-                    if (enumRefs.containsKey(var.dataType)) {
-                        // Handle any enum properties referred to by $ref.
-                        // This is different in C# than most other generators, because enums in C# are compiled to integral types,
-                        // while enums in many other languages are true objects.
-                        CodegenModel refModel = enumRefs.get(var.dataType);
-                        var.allowableValues = refModel.allowableValues;
-                        var.isEnum = true;
-
-                        // We do these after updateCodegenPropertyEnum to avoid generalities that don't mesh with C#.
-                        var.isPrimitiveType = true;
-                    }
-                }
-                for (CodegenProperty var : model.readOnlyVars) {
-                    if (enumRefs.containsKey(var.dataType)) {
-                        // Handle any enum properties referred to by $ref.
-                        // This is different in C# than most other generators, because enums in C# are compiled to integral types,
-                        // while enums in many other languages are true objects.
-                        CodegenModel refModel = enumRefs.get(var.dataType);
-                        var.allowableValues = refModel.allowableValues;
-                        var.isEnum = true;
-
-                        // We do these after updateCodegenPropertyEnum to avoid generalities that don't mesh with C#.
-                        var.isPrimitiveType = true;
-                    }
-                }
-
-                /* Comment out the following as model.dataType is always the model name, eg. OuterIntegerEnum,
-                 * and this will fix the integer enum via #9035.
-                 * Only x-enum-byte is used in the template but it won't work due to the bug mentioned above.
-                 * A better solution is to introduce isLong, isInteger, etc in the DefaultCodegen
-                 * so that there is no need for each generator to post-process model enums.
-                 *
-                // We're looping all models here.
-                if (model.isEnum) {
-                    // We now need to make allowableValues.enumVars look like the context of CodegenProperty
-                    Boolean isString = false;
-                    Boolean isInteger = false;
-                    Boolean isLong = false;
-                    Boolean isByte = false;
-
-                    if (model.dataType.startsWith("byte")) {
-                        // C# Actually supports byte and short enums, swagger spec only supports byte.
-                        isByte = true;
-                        model.vendorExtensions.put("x-enum-byte", true);
-                    } else if (model.dataType.startsWith("int32")) {
-                        isInteger = true;
-                        model.vendorExtensions.put("x-enum-integer", true);
-                    } else if (model.dataType.startsWith("int64")) {
-                        isLong = true;
-                        model.vendorExtensions.put("x-enum-long", true);
-                    } else {
-                        // C# doesn't support non-integral enums, so we need to treat everything else as strings (e.g. to not lose precision or data integrity)
-                        isString = true;
-                        model.vendorExtensions.put("x-enum-string", true);
-                    }
-
-                    // Since we iterate enumVars for modelnnerEnum and enumClass templates, and CodegenModel is missing some of CodegenProperty's properties,
-                    // we can take advantage of Mustache's contextual lookup to add the same "properties" to the model's enumVars scope rather than CodegenProperty's scope.
-                    List<Map<String, String>> enumVars = (ArrayList<Map<String, String>>) model.allowableValues.get("enumVars");
-                    List<Map<String, Object>> newEnumVars = new ArrayList<Map<String, Object>>();
-                    for (Map<String, String> enumVar : enumVars) {
-                        Map<String, Object> mixedVars = new HashMap<String, Object>();
-                        mixedVars.putAll(enumVar);
-
-                        mixedVars.put("isString", isString);
-                        mixedVars.put("isLong", isLong);
-                        mixedVars.put("isInteger", isInteger);
-                        mixedVars.put("isByte", isByte);
-
-                        newEnumVars.add(mixedVars);
-                    }
-
-                    if (!newEnumVars.isEmpty()) {
-                        model.allowableValues.put("enumVars", newEnumVars);
-                    }
-                } */
-            } else {
-                LOGGER.warn("Expected to retrieve model %s by name, but no model was found. Check your -Dmodels inclusions.", openAPIName);
-            }
+    private String patchPropertyName(CodegenModel model, String value) {
+        // the casing will be wrong if we just set the name to escapeReservedWord
+        // if we try to fix it with camelize, underscores get stripped out
+        // so test if the name was escaped and then replace var with Var
+        String tmpPropertyName = escapeReservedWord(model, value);
+        if (!value.equals(tmpPropertyName) || value.startsWith(this.invalidNamePrefix)) {
+            value = tmpPropertyName;
+            String firstCharacter = value.substring(0, 1);
+            value = value.substring(1);
+            value = firstCharacter.toUpperCase(Locale.ROOT) + value;
         }
+
+        return value;
+    }
+
+    protected void patchProperty(Map<String, CodegenModel> enumRefs, CodegenModel model, CodegenProperty property) {
+        if (enumRefs.containsKey(property.dataType)) {
+            // Handle any enum properties referred to by $ref.
+            // This is different in C# than most other generators, because enums in C# are compiled to integral types,
+            // while enums in many other languages are true objects.
+            CodegenModel refModel = enumRefs.get(property.dataType);
+            property.allowableValues = refModel.allowableValues;
+            property.isEnum = true;
+
+            // We do these after updateCodegenPropertyEnum to avoid generalities that don't mesh with C#.
+            property.isPrimitiveType = true;
+        }
+
+        Boolean isValueType = isValueType(property);
+
+        property.vendorExtensions.put("x-is-value-type", isValueType);
+
+        if (property.isNullable && !property.isContainer && isValueType) {
+            property.vendorExtensions.put("x-nullable-value-type", true);
+        }
+
+        if (this.getNullableReferencesTypes() || isValueType) {
+            property.vendorExtensions.put("x-nullable-type", true);
+        }
+
+        String tmpPropertyName = escapeReservedWord(model, property.name);
+        property.name = patchPropertyName(model, property.name);
+
+        // fix incorrect data types for maps of maps
+        if (property.datatypeWithEnum.endsWith(", List>") && property.items != null) {
+            property.datatypeWithEnum = property.datatypeWithEnum.replace(", List>", ", " + property.items.datatypeWithEnum + ">");
+            property.dataType = property.datatypeWithEnum;
+        }
+        if (property.datatypeWithEnum.endsWith(", Dictionary>") && property.items != null) {
+            property.datatypeWithEnum = property.datatypeWithEnum.replace(", Dictionary>", ", " + property.items.datatypeWithEnum + ">");
+            property.dataType = property.datatypeWithEnum;
+        }
+
+        // HOTFIX: https://github.com/OpenAPITools/openapi-generator/issues/14944
+        if (property.datatypeWithEnum.equals("decimal")) {
+            property.isDecimal = true;
+        }
+    }
+
+    @Override
+    protected List<Map<String, Object>> buildEnumVars(List<Object> values, String dataType) {
+        List<Map<String, Object>> enumVars = super.buildEnumVars(values, dataType);
+
+        // this is needed for enumRefs like OuterEnum marked as nullable and also have string values
+        // keep isString true so that the index will be used as the enum value instead of a string
+        // this is inline with C# enums with string values
+        if ("string?".equals(dataType)) {
+            enumVars.forEach((enumVar) -> {
+                enumVar.put("isString", true);
+            });
+        }
+
+        return enumVars;
     }
 
     /**
@@ -603,49 +726,13 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         }
     }
 
-    /**
-     * Update property if it is a C# value type
-     *
-     * @param models list of all models
-     */
-    protected void updateValueTypeProperty(Map<String, Object> models) {
-        for (Map.Entry<String, Object> entry : models.entrySet()) {
-            String openAPIName = entry.getKey();
-            CodegenModel model = ModelUtils.getModelByName(openAPIName, models);
-            if (model != null) {
-                for (CodegenProperty var : model.vars) {
-                    var.vendorExtensions.put("x-is-value-type", isValueType(var));
-                }
-            }
-        }
-    }
-
-    /**
-     * Update property if it is a C# nullable type
-     *
-     * @param models list of all models
-     */
-    protected void updateNullableTypeProperty(Map<String, Object> models) {
-        for (Map.Entry<String, Object> entry : models.entrySet()) {
-            String openAPIName = entry.getKey();
-            CodegenModel model = ModelUtils.getModelByName(openAPIName, models);
-            if (model != null) {
-                for (CodegenProperty var : model.vars) {
-                    if (!var.isContainer && (nullableType.contains(var.dataType) || var.isEnum)) {
-                        var.vendorExtensions.put("x-csharp-value-type", true);
-                    }
-                }
-            }
-        }
-    }
-
     @Override
-    public Map<String, Object> postProcessOperationsWithModels(Map<String, Object> objs, List<Object> allModels) {
+    public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
         super.postProcessOperationsWithModels(objs, allModels);
         if (objs != null) {
-            Map<String, Object> operations = (Map<String, Object>) objs.get("operations");
+            OperationMap operations = objs.getOperations();
             if (operations != null) {
-                List<CodegenOperation> ops = (List<CodegenOperation>) operations.get("operation");
+                List<CodegenOperation> ops = operations.getOperation();
                 for (CodegenOperation operation : ops) {
 
                     // Check return types for collection
@@ -672,7 +759,7 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
                             }
                         } else {
                             operation.returnContainer = operation.returnType;
-                            operation.isMap = this.mapTypes.contains(typeMapping);
+                            operation.isMap = this.mapTypes.stream().anyMatch(t -> typeMapping.startsWith(t));
                         }
                     }
 
@@ -701,37 +788,57 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
                         }
                     }
 
-                    if (!isSupportNullable()) {
-                        for (CodegenParameter parameter : operation.allParams) {
-                            CodegenModel model = null;
-                            for (Object modelHashMap : allModels) {
-                                CodegenModel codegenModel = ((HashMap<String, CodegenModel>) modelHashMap).get("model");
-                                if (codegenModel.getClassname().equals(parameter.dataType)) {
-                                    model = codegenModel;
-                                    break;
-                                }
-                            }
+                    for (ModelMap modelHashMap : allModels) {
+                        CodegenModel codegenModel = modelHashMap.getModel();
 
-                            if (model == null) {
-                                // Primitive data types all come already marked
-                                parameter.isNullable = true;
-                            } else {
-                                // Effectively mark enum models as enums and non-nullable
-                                if (model.isEnum) {
-                                    parameter.isEnum = true;
-                                    parameter.allowableValues = model.allowableValues;
-                                    parameter.isPrimitiveType = true;
-                                    parameter.isNullable = false;
-                                } else {
-                                    parameter.isNullable = true;
-                                }
-                            }
+                        for (CodegenParameter parameter : operation.allParams) {
+                            patchParameter(parameter, allModels);
                         }
-                    } else {
-                        // Effectively mark enum models as enums
-                        updateCodegenParametersEnum(operation.allParams, allModels);
+
+                        for (CodegenParameter parameter : operation.bodyParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.cookieParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.formParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.headerParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.implicitHeadersParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.optionalParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.pathParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.queryParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.notNullableParams) {
+                            patchParameter(parameter, allModels);
+                        }
+
+                        for (CodegenParameter parameter : operation.requiredParams) {
+                            patchParameter(parameter, allModels);
+                        }
                     }
 
+                    List<CodegenParameter> referenceTypes = operation.allParams.stream().filter(p -> p.vendorExtensions.get("x-is-value-type") == null && !p.isNullable).collect(Collectors.toList());
+                    operation.vendorExtensions.put("x-not-nullable-reference-types", referenceTypes);
+                    operation.vendorExtensions.put("x-has-not-nullable-reference-types", referenceTypes.size() > 0);
                     processOperation(operation);
                 }
             }
@@ -740,38 +847,87 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         return objs;
     }
 
-    protected void processOperation(CodegenOperation operation) {
-        // default noop
+    protected void patchVendorExtensionNullableValueType(CodegenParameter parameter) {
+        if (parameter.isNullable && !parameter.isContainer && (this.getValueTypes().contains(parameter.dataType) || parameter.isEnum)) {
+            parameter.vendorExtensions.put("x-nullable-value-type", true);
+        }
     }
 
-    private void updateCodegenParametersEnum(List<CodegenParameter> parameters, List<Object> allModels) {
-        for (CodegenParameter parameter : parameters) {
-            CodegenModel model = null;
-            for (Object modelHashMap : allModels) {
-                CodegenModel codegenModel = ((HashMap<String, CodegenModel>) modelHashMap).get("model");
-                if (codegenModel.getClassname().equals(parameter.dataType)) {
-                    model = codegenModel;
-                    break;
-                }
-            }
+    /** This is the same as patchVendorExtensionNullableValueType except it uses the deprecated getNullableTypes property */
+    protected void patchVendorExtensionNullableValueTypeLegacy(CodegenParameter parameter) {
+        if (parameter.isNullable && !parameter.isContainer && (this.getNullableTypes().contains(parameter.dataType) || parameter.isEnum)) {
+            parameter.vendorExtensions.put("x-nullable-value-type", true);
+        }
+    }
 
-            if (model != null) {
-                // Effectively mark enum models as enums and non-nullable
+    private void patchParameter(CodegenParameter parameter, List<ModelMap> allModels) {
+        parameter.paramName = escapeReservedWord(parameter.paramName);
+
+        patchVendorExtensionNullableValueType(parameter);
+
+        if (this.getNullableReferencesTypes() || (parameter.vendorExtensions.get("x-nullable-value-type") != null)) {
+            parameter.vendorExtensions.put("x-nullable-type", true);
+        }
+
+
+        CodegenModel model = null;
+        for (ModelMap modelHashMap : allModels) {
+            CodegenModel codegenModel = modelHashMap.getModel();
+            if (codegenModel.getClassname().equals(parameter.dataType)) {
+                model = codegenModel;
+                break;
+            }
+        }
+
+        if (!isSupportNullable()) {
+            if (model == null) {
+                parameter.isNullable = true;
+            } else {
                 if (model.isEnum) {
                     parameter.isEnum = true;
                     parameter.allowableValues = model.allowableValues;
                     parameter.isPrimitiveType = true;
-                    parameter.vendorExtensions.put("x-csharp-value-type", true);
+                    parameter.isNullable = false;
+                } else {
+                    parameter.isNullable = true;
                 }
             }
+        } else {
+            updateCodegenParameterEnum(parameter, model);
+        }
+    }
 
-            if (!parameter.isContainer && nullableType.contains(parameter.dataType)) {
+    protected void processOperation(CodegenOperation operation) {
+        // default noop
+    }
+
+    protected void updateCodegenParameterEnumLegacy(CodegenParameter parameter, CodegenModel model) {
+        if (model != null) {
+            if (model.isEnum) {
+                parameter.isEnum = true;
+                parameter.allowableValues = model.allowableValues;
+                parameter.isPrimitiveType = true;
                 parameter.vendorExtensions.put("x-csharp-value-type", true);
             }
+        }
 
-            if (!parameter.required && parameter.vendorExtensions.get("x-csharp-value-type") != null) { //optional
-                parameter.dataType = parameter.dataType + "?";
+        if (!parameter.isContainer && this.getNullableTypes().contains(parameter.dataType)) {
+            parameter.vendorExtensions.put("x-csharp-value-type", true);
+        }
+    }
+
+    protected void updateCodegenParameterEnum(CodegenParameter parameter, CodegenModel model) {
+        if (model != null) {
+            if (model.isEnum) {
+                parameter.isEnum = true;
+                parameter.allowableValues = model.allowableValues;
+                parameter.isPrimitiveType = true;
+                parameter.vendorExtensions.put("x-is-value-type", true);
             }
+        }
+
+        if (!parameter.isContainer && this.getValueTypes().contains(parameter.dataType)) {
+            parameter.vendorExtensions.put("x-is-value-type", true);
         }
     }
 
@@ -818,7 +974,7 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         // sanitize name
         name = sanitizeName(name);
 
-        // if it's all uppper case, do nothing
+        // if it's all upper case, do nothing
         if (name.matches("^[A-Z_]*$")) {
             return name;
         }
@@ -847,29 +1003,36 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         // replace - with _ e.g. created-at => created_at
         name = name.replaceAll("-", "_");
 
-        // if it's all uppper case, do nothing
+        // if it's all upper case, do nothing
         if (name.matches("^[A-Z_]*$")) {
             return name;
         }
 
         // camelize(lower) the variable name
         // pet_id => petId
-        name = camelize(name, true);
-
-        // for reserved word or word starting with number, append _
-        if (isReservedWord(name) || name.matches("^\\d.*")) {
-            name = escapeReservedWord(name);
-        }
+        name = camelize(name, LOWERCASE_FIRST_LETTER);
 
         return name;
     }
 
+    public String escapeReservedWord(CodegenModel model, String name) {
+        name = this.escapeReservedWord(name);
+
+        return name.equalsIgnoreCase(model.getClassname())
+            ? this.invalidNamePrefix + camelize(name)
+            : name;
+    }
+
     @Override
     public String escapeReservedWord(String name) {
-        if (this.reservedWordsMappings().containsKey(name)) {
-            return this.reservedWordsMappings().get(name);
+        if (reservedWords().contains(name) ||
+                reservedWords().contains(name.toLowerCase(Locale.ROOT)) ||
+                reservedWords().contains(camelize(sanitizeName(name))) ||
+                isReservedWord(name) ||
+                name.matches("^\\d.*")) {
+            name = this.invalidNamePrefix + camelize(name);
         }
-        return "_" + name;
+        return name;
     }
 
     /**
@@ -880,33 +1043,14 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
      */
     @Override
     public String toExampleValue(Schema p) {
-        if (ModelUtils.isStringSchema(p)) {
-            if (p.getExample() != null) {
-                return "\"" + p.getExample().toString() + "\"";
-            }
-        } else if (ModelUtils.isBooleanSchema(p)) {
-            if (p.getExample() != null) {
-                return p.getExample().toString();
-            }
-        } else if (ModelUtils.isDateSchema(p)) {
-            // TODO
-        } else if (ModelUtils.isDateTimeSchema(p)) {
-            // TODO
-        } else if (ModelUtils.isNumberSchema(p)) {
-            if (p.getExample() != null) {
-                return p.getExample().toString();
-            }
-        } else if (ModelUtils.isIntegerSchema(p)) {
-            if (p.getExample() != null) {
-                return p.getExample().toString();
-            }
-        }
-
-        return null;
+        return p.getExample() == null
+            ? null
+            : p.getExample().toString();
     }
 
     /**
      * Return the default value of the property
+     *
      * @param p OpenAPI property object
      * @return string presentation of the default value of the property
      */
@@ -940,7 +1084,7 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
             }
         } else if (ModelUtils.isStringSchema(p)) {
             if (p.getDefault() != null) {
-                String _default = (String) p.getDefault();
+                String _default = String.valueOf(p.getDefault());
                 if (p.getEnum() == null) {
                     return "\"" + _default + "\"";
                 } else {
@@ -1030,11 +1174,18 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
 
     @Override
     public String toModelName(String name) {
-        // We need to check if import-mapping has a different model for this class, so we use it
+        // We need to check if schema-mapping has a different model for this class, so we use it
         // instead of the auto-generated one.
-        if (importMapping.containsKey(name)) {
-            return importMapping.get(name);
+        if (schemaMapping.containsKey(name)) {
+            return schemaMapping.get(name);
         }
+
+        // memoization and lookup in the cache
+        String origName = name;
+        if (schemaKeyToModelNameCache.containsKey(origName)) {
+            return schemaKeyToModelNameCache.get(origName);
+        }
+
         if (!StringUtils.isEmpty(modelNamePrefix)) {
             name = modelNamePrefix + "_" + name;
         }
@@ -1043,24 +1194,27 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
             name = name + "_" + modelNameSuffix;
         }
 
-        name = sanitizeName(name);
+        name = camelize(sanitizeName(name));
 
         // model name cannot use reserved keyword, e.g. return
         if (isReservedWord(name)) {
             LOGGER.warn("{} (reserved word) cannot be used as model name. Renamed to {}", name, camelize("model_" + name));
-            name = "model_" + name; // e.g. return => ModelReturn (after camelize)
+            name = camelize("model_" + name); // e.g. return => ModelReturn (after camelize)
         }
 
         // model name starts with number
         if (name.matches("^\\d.*")) {
             LOGGER.warn("{} (model name starts with number) cannot be used as model name. Renamed to {}", name,
                     camelize("model_" + name));
-            name = "model_" + name; // e.g. 200Response => Model200Response (after camelize)
+            name = camelize("model_" + name); // e.g. 200Response => Model200Response (after camelize)
         }
+
+        // store in cache
+        schemaKeyToModelNameCache.put(origName, name);
 
         // camelize the model name
         // phone_number => PhoneNumber
-        return camelize(name);
+        return name;
     }
 
     @Override
@@ -1083,9 +1237,13 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         return toModelName(name) + "Tests";
     }
 
-    public void setLicenseUrl(String licenseUrl) {this.licenseUrl = licenseUrl;}
+    public void setLicenseUrl(String licenseUrl) {
+        this.licenseUrl = licenseUrl;
+    }
 
-    public void setLicenseName(String licenseName) {this.licenseName = licenseName;}
+    public void setLicenseName(String licenseName) {
+        this.licenseName = licenseName;
+    }
 
     public void setPackageName(String packageName) {
         this.packageName = packageName;
@@ -1101,6 +1259,14 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
 
     public void setPackageProductName(String packageProductName) {
         this.packageProductName = packageProductName;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = dateFormat;
+    }
+
+    public void setDateTimeFormat(String dateTimeFormat) {
+        this.dateTimeFormat = dateTimeFormat;
     }
 
     public void setPackageDescription(String packageDescription) {
@@ -1123,15 +1289,34 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         this.sourceFolder = sourceFolder;
     }
 
+    public void setTestFolder(String testFolder) {
+        this.testFolder = testFolder;
+    }
+
     public String getInterfacePrefix() {
         return interfacePrefix;
     }
 
-    public void setNullableReferenceTypes(final Boolean nullReferenceTypesFlag){
+    public void setZeroBasedEnums(final Boolean zeroBasedEnums) {
+        this.zeroBasedEnums = zeroBasedEnums;
+    }
+
+    public void setNullableReferenceTypes(final Boolean nullReferenceTypesFlag) {
         this.nullReferenceTypesFlag = nullReferenceTypesFlag;
-        if (nullReferenceTypesFlag == true){
-            this.nullableType.add("string");
+        additionalProperties.put("nullableReferenceTypes", nullReferenceTypesFlag);
+        additionalProperties.put("nrt", nullReferenceTypesFlag);
+
+        if (nullReferenceTypesFlag) {
+            additionalProperties.put("nrt?", "?");
+            additionalProperties.put("nrt!", "!");
+        } else {
+            additionalProperties.remove("nrt?");
+            additionalProperties.remove("nrt!");
         }
+    }
+
+    public boolean getNullableReferencesTypes() {
+        return this.nullReferenceTypesFlag;
     }
 
     public void setInterfacePrefix(final String interfacePrefix) {
@@ -1160,7 +1345,9 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
         // Per: https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/enum
         // The approved types for an enum are byte, sbyte, short, ushort, int, uint, long, or ulong.
         // but we're not supporting unsigned integral types or shorts.
-        if (datatype.startsWith("int") || datatype.startsWith("long") || datatype.startsWith("byte")) {
+        if (datatype.startsWith("int") || datatype.startsWith("uint") ||
+                datatype.startsWith("long") || datatype.startsWith("ulong") ||
+                datatype.startsWith("byte")) {
             return value;
         }
 
@@ -1228,59 +1415,135 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
      */
 
     protected boolean isValueType(CodegenProperty var) {
-        return (valueTypes.contains(var.dataType) || var.isEnum ) ;
+        return (this.getValueTypes().contains(var.dataType) || var.isEnum);
     }
 
     @Override
-    public void setParameterExampleValue(CodegenParameter codegenParameter) {
+    public void setParameterExampleValue(CodegenParameter p) {
+        String example;
 
-        // set the example value
-        // if not specified in x-example, generate a default value
-        // TODO need to revise how to obtain the example value
-        if (codegenParameter.vendorExtensions != null && codegenParameter.vendorExtensions.containsKey("x-example")) {
-            codegenParameter.example = Json.pretty(codegenParameter.vendorExtensions.get("x-example"));
-        } else if (Boolean.TRUE.equals(codegenParameter.isBoolean)) {
-            codegenParameter.example = "true";
-        } else if (Boolean.TRUE.equals(codegenParameter.isLong)) {
-            codegenParameter.example = "789";
-        } else if (Boolean.TRUE.equals(codegenParameter.isInteger)) {
-            codegenParameter.example = "56";
-        } else if (Boolean.TRUE.equals(codegenParameter.isFloat)) {
-            codegenParameter.example = "3.4F";
-        } else if (Boolean.TRUE.equals(codegenParameter.isDouble)) {
-            codegenParameter.example = "1.2D";
-        } else if (Boolean.TRUE.equals(codegenParameter.isNumber)) {
-            codegenParameter.example = "8.14";
-        } else if (Boolean.TRUE.equals(codegenParameter.isBinary)) {
-            codegenParameter.example = "BINARY_DATA_HERE";
-        } else if (Boolean.TRUE.equals(codegenParameter.isByteArray)) {
-            codegenParameter.example = "BYTE_ARRAY_DATA_HERE";
-        } else if (Boolean.TRUE.equals(codegenParameter.isFile)) {
-            codegenParameter.example = "/path/to/file.txt";
-        } else if (Boolean.TRUE.equals(codegenParameter.isDate)) {
-            codegenParameter.example = "2013-10-20";
-        } else if (Boolean.TRUE.equals(codegenParameter.isDateTime)) {
-            codegenParameter.example = "2013-10-20T19:20:30+01:00";
-        } else if (Boolean.TRUE.equals(codegenParameter.isUuid)) {
-            codegenParameter.example = "38400000-8cf0-11bd-b23e-10b96e4ef00d";
-        } else if (Boolean.TRUE.equals(codegenParameter.isUri)) {
-            codegenParameter.example = "https://openapi-generator.tech";
-        } else if (Boolean.TRUE.equals(codegenParameter.isString)) {
-            codegenParameter.example = codegenParameter.paramName + "_example";
+        boolean hasAllowableValues = p.allowableValues != null && !p.allowableValues.isEmpty();
+        if (hasAllowableValues) {
+            //support examples for inline enums
+            final List<Object> values = (List<Object>) p.allowableValues.get("values");
+            example = String.valueOf(values.get(0));
+        } else if (p.defaultValue == null) {
+            example = p.example;
+        } else {
+            example = p.defaultValue;
         }
-    }
 
-    @Override
-    public void postProcessParameter(CodegenParameter parameter) {
-        super.postProcessParameter(parameter);
-
-        // ensure a method's parameters are marked as nullable when nullable or when nullReferences are enabled
-        // this is mostly needed for reference types used as a method's parameters
-        if (!parameter.required && (nullReferenceTypesFlag || nullableType.contains(parameter.dataType))) {
-            parameter.dataType = parameter.dataType.endsWith("?")
-                ? parameter.dataType
-                : parameter.dataType + "?";
+        String type = p.baseType;
+        if (type == null) {
+            type = p.dataType;
         }
+
+        if (p.isString) {
+            if (example == null) {
+                example = p.paramName + "_example";
+            }
+            example = "\"" + escapeText(example) + "\"";
+        } else if (p.isInteger || p.isShort) {
+            if (example == null) {
+                example = "56";
+            }
+        } else if (p.isLong) {
+            if (example == null) {
+                example = "789";
+            }
+            example = StringUtils.appendIfMissingIgnoreCase(example, "L");
+        } else if (p.isFloat) {
+            if (example == null) {
+                example = "3.4F";
+            }
+            example = StringUtils.appendIfMissingIgnoreCase(example, "F");
+        } else if (p.isDouble) {
+            if (example == null) {
+                example = "1.2D";
+            }
+            example = StringUtils.appendIfMissingIgnoreCase(example, "D");
+        } else if (p.isNumber) {
+            if (example == null) {
+                example = "8.14";
+            }
+            example = StringUtils.appendIfMissingIgnoreCase(example, "D");
+        } else if (p.isBoolean) {
+            if (example == null) {
+                example = "true";
+            }
+        } else if (p.isBinary || p.isFile) {
+            if (example == null) {
+                example = "/path/to/file.txt";
+            }
+            example = "new System.IO.MemoryStream(System.IO.File.ReadAllBytes(\"" + escapeText(example) + "\"))";
+        } else if (p.isByteArray) {
+            if (example == null) {
+                example = "BYTE_ARRAY_DATA_HERE";
+            }
+            example = "System.Text.Encoding.ASCII.GetBytes(\"" + escapeText(example) + "\")";
+        } else if (p.isDate) {
+            if (example == null) {
+                example = "DateTime.Parse(\"2013-10-20\")";
+            } else {
+                example = "DateTime.Parse(\"" + example + "\")";
+            }
+        } else if (p.isDateTime) {
+            if (example == null) {
+                example = "DateTime.Parse(\"2013-10-20T19:20:30+01:00\")";
+            } else {
+                example = "DateTime.Parse(\"" + example + "\")";
+            }
+        } else if (p.isDecimal) {
+            if (example == null) {
+                example = "8.9M";
+            }
+            example = StringUtils.appendIfMissingIgnoreCase(example, "M");
+        } else if (p.isUuid) {
+            if (example == null) {
+                example = "\"38400000-8cf0-11bd-b23e-10b96e4ef00d\"";
+            } else {
+                example = "\"" + example + "\"";
+            }
+        } else if (p.isUri) {
+            if (example == null) {
+                example = "new Uri(\"https://openapi-generator.tech\")";
+            } else {
+                example = "new Uri(\"" + example + "\")";
+            }
+        } else if (hasAllowableValues) {
+            //parameter is enum defined as a schema component
+            example = "(" + type + ") \"" + example + "\"";
+        } else if (!languageSpecificPrimitives.contains(type)) {
+            // type is a model class, e.g. User
+            example = "new " + type + "()";
+        }
+
+        if (example == null) {
+            example = "null";
+        } else if (Boolean.TRUE.equals(p.isArray)) {
+            if (p.items.defaultValue != null) {
+                String innerExample;
+                if ("String".equals(p.items.dataType)) {
+                    innerExample = "\"" + p.items.defaultValue + "\"";
+                } else {
+                    innerExample = p.items.defaultValue;
+                }
+                example = "new List<" + p.items.dataType + ">({" + innerExample + "})";
+            } else {
+                example = "new List<" + p.items.dataType + ">()";
+            }
+        } else if (Boolean.TRUE.equals(p.isModel)) {
+            example = "new " + p.dataType + "()";
+        } else if (Boolean.TRUE.equals(p.isMap)) {
+            if (p.items != null) {
+                example = "new Dictionary<String, " + p.items.dataType + ">";
+            } else {
+                // default to String if item is not defined
+                example = "new Dictionary<String, String>";
+            }
+        }
+
+        p.example = example;
     }
 
     @Override
@@ -1296,7 +1559,7 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
 
         // only process files with .cs extension
         if ("cs".equals(FilenameUtils.getExtension(file.toString()))) {
-            String command = csharpPostProcessFile + " " + file.toString();
+            String command = csharpPostProcessFile + " " + file;
             try {
                 Process p = Runtime.getRuntime().exec(command);
                 int exitValue = p.waitFor();
@@ -1310,6 +1573,70 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen implements Co
                 // Restore interrupted state
                 Thread.currentThread().interrupt();
             }
+        }
+    }
+
+    @Override
+    public GeneratorLanguage generatorLanguage() {
+        return GeneratorLanguage.C_SHARP;
+    }
+
+    @Override
+    public String toRegularExpression(String pattern) {
+        return addRegularExpressionDelimiter(pattern);
+    }
+
+    @Override
+    public String addRegularExpressionDelimiter(String pattern) {
+        if (StringUtils.isEmpty(pattern)) {
+            return pattern;
+        }
+
+        if (!pattern.matches("^/.*")) {
+            return "/" + pattern + "/";
+        }
+
+        return pattern;
+    }
+
+    @Deprecated
+    protected Set<String> getNullableTypes() {
+        throw new RuntimeException("This method should no longer be used.");
+    }
+
+    protected Set<String> getValueTypes() {
+        return new HashSet<>(Arrays.asList("decimal", "bool", "int", "uint", "long", "ulong", "float", "double", "DateTime", "DateTimeOffset", "Guid"));
+    }
+
+    protected void setTypeMapping() {
+        typeMapping = new HashMap<>();
+        typeMapping.put("string", "string");
+        typeMapping.put("binary", "byte[]");
+        typeMapping.put("ByteArray", "byte[]");
+        typeMapping.put("boolean", "bool");
+        typeMapping.put("integer", "int");
+        typeMapping.put("UnsignedInteger", "uint");
+        typeMapping.put("UnsignedLong", "ulong");
+        typeMapping.put("long", "long");
+        typeMapping.put("float", "float");
+        typeMapping.put("double", "double");
+        typeMapping.put("number", "decimal");
+        typeMapping.put("decimal", "decimal");
+        typeMapping.put("BigDecimal", "decimal");
+        typeMapping.put("DateTime", this.useDateTimeOffsetFlag ? "DateTimeOffset" : "DateTime");
+        typeMapping.put("date", "DateTime");
+        typeMapping.put("file", "System.IO.Stream");
+        typeMapping.put("array", "List");
+        typeMapping.put("list", "List");
+        typeMapping.put("map", "Dictionary");
+        typeMapping.put("object", "Object");
+        typeMapping.put("UUID", "Guid");
+        typeMapping.put("URI", "string");
+        typeMapping.put("AnyType", "Object");
+
+        if (this.useCollection) {
+            typeMapping.put("array", "Collection");
+            typeMapping.put("list", "Collection");
         }
     }
 }

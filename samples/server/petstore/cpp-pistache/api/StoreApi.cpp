@@ -22,7 +22,7 @@ using namespace org::openapitools::server::model;
 const std::string StoreApi::base = "/v2";
 
 StoreApi::StoreApi(const std::shared_ptr<Pistache::Rest::Router>& rtr)
-    : router(rtr)
+    : ApiBase(rtr)
 {
 }
 
@@ -51,7 +51,7 @@ std::pair<Pistache::Http::Code, std::string> StoreApi::handleParsingException(co
     } catch (org::openapitools::server::helpers::ValidationException &e) {
         return std::make_pair(Pistache::Http::Code::Bad_Request, e.what());
     } catch (std::exception &e) {
-        return std::make_pair(Pistache::Http::Code::Internal_Server_Error, e.what())
+        return std::make_pair(Pistache::Http::Code::Internal_Server_Error, e.what());
     }
 }
 
