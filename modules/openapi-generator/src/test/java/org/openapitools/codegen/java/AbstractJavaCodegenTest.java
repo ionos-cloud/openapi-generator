@@ -392,7 +392,8 @@ public class AbstractJavaCodegenTest {
     public void apiDocFileFolder() {
         final AbstractJavaCodegen codegen = new P_AbstractJavaCodegen();
         codegen.setOutputDir("/User/open.api.tools");
-        Assert.assertEquals(codegen.apiDocFileFolder(), "/User/open.api.tools/docs/".replace('/', File.separatorChar));
+        // ionos - path to docs
+        Assert.assertEquals(codegen.apiDocFileFolder(), "/User/open.api.tools/docs/api/".replace('/', File.separatorChar));
     }
 
     @Test(description = "tests if API version specification is used if no version is provided in additional properties")

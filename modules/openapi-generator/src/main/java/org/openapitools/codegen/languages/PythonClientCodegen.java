@@ -52,8 +52,9 @@ public class PythonClientCodegen extends AbstractPythonCodegen implements Codege
     public static final String MAP_NUMBER_TO = "mapNumberTo";
 
     protected String packageUrl;
-    protected String apiDocPath = "docs" + File.separator;
-    protected String modelDocPath = "docs" + File.separator;
+    // ionos - path to docs
+    protected String apiDocPath = "docs" + File.separator + "api" +File.separator;
+    protected String modelDocPath = "docs" + File.separator +"models" + File.separator;
     protected boolean hasModelsToImport = Boolean.FALSE;
     protected boolean useOneOfDiscriminatorLookup = false; // use oneOf discriminator's mapping for model lookup
     protected String datetimeFormat = "%Y-%m-%dT%H:%M:%S.%f%z";

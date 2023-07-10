@@ -350,7 +350,8 @@ public class JavaClientCodegenTest {
         TestUtils.ensureContainsFile(files, output, ".travis.yml");
         TestUtils.ensureContainsFile(files, output, "build.gradle");
         TestUtils.ensureContainsFile(files, output, "build.sbt");
-        TestUtils.ensureContainsFile(files, output, "docs/DefaultApi.md");
+        // ionos - path to docs
+        TestUtils.ensureContainsFile(files, output, "docs/api/DefaultApi.md");
         TestUtils.ensureContainsFile(files, output, "git_push.sh");
         TestUtils.ensureContainsFile(files, output, "gradle.properties");
         TestUtils.ensureContainsFile(files, output, "gradle/wrapper/gradle-wrapper.jar");
@@ -418,8 +419,9 @@ public class JavaClientCodegenTest {
         TestUtils.ensureContainsFile(files, output, ".travis.yml");
         TestUtils.ensureContainsFile(files, output, "build.gradle");
         TestUtils.ensureContainsFile(files, output, "build.sbt");
-        TestUtils.ensureContainsFile(files, output, "docs/PingApi.md");
-        TestUtils.ensureContainsFile(files, output, "docs/SomeObj.md");
+        // ionos - path to docs
+        TestUtils.ensureContainsFile(files, output, "docs/api/PingApi.md");
+        TestUtils.ensureContainsFile(files, output, "docs/models/SomeObj.md");
         TestUtils.ensureContainsFile(files, output, "git_push.sh");
         TestUtils.ensureContainsFile(files, output, "gradle.properties");
         TestUtils.ensureContainsFile(files, output, "gradle/wrapper/gradle-wrapper.jar");

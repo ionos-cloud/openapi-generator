@@ -30,11 +30,15 @@ import org.openapitools.codegen.model.OperationMap;
 import org.openapitools.codegen.model.OperationsMap;
 import org.openapitools.codegen.utils.ModelUtils;
 
+import java.io.File;
 import java.util.*;
 
 public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodegen {
 
     public static final String NPM_REPOSITORY = "npmRepository";
+    // ionos - path to docs
+    protected String apiDocPath = "docs/api/";
+    protected String modelDocPath = "docs/models/";
     public static final String WITH_INTERFACES = "withInterfaces";
     public static final String SEPARATE_MODELS_AND_API = "withSeparateModelsAndApi";
     public static final String WITHOUT_PREFIX_ENUMS = "withoutPrefixEnums";
@@ -63,6 +67,9 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
 
         outputFolder = "generated-code/typescript-axios";
         embeddedTemplateDir = templateDir = "typescript-axios";
+        // ionos - added 2 files that need to be taken for typescript
+        modelDocTemplateFiles.put("model_doc.mustache", ".md");
+        apiDocTemplateFiles.put("api_doc.mustache", ".md");
 
         this.cliOptions.add(new CliOption(NPM_REPOSITORY, "Use this property to set an url of your private npmRepo in the package.json"));
         this.cliOptions.add(new CliOption(WITH_INTERFACES, "Setting this property to true will generate interfaces next to the default class implementations.", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
@@ -121,6 +128,10 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
         additionalProperties.put("tsApiPackage", tsApiPackage);
         additionalProperties.put("apiRelativeToRoot", apiRelativeToRoot);
         additionalProperties.put("modelRelativeToRoot", modelRelativeToRoot);
+
+        // ionos - make api and model doc path available in mustache template
+        additionalProperties.put("apiDocPath", apiDocPath);
+        additionalProperties.put("modelDocPath", modelDocPath);
 
         supportingFiles.add(new SupportingFile("index.mustache", "", "index.ts"));
         supportingFiles.add(new SupportingFile("baseApi.mustache", "", "base.ts"));
@@ -294,6 +305,16 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
         if (supportsES6) {
             supportingFiles.add(new SupportingFile("tsconfig.esm.mustache", "", "tsconfig.esm.json"));
         }
+    }
+    //ionos api docs
+    @Override
+    public String apiDocFileFolder() {
+        return (outputFolder + "/" + apiDocPath).replace('/', File.separatorChar);
+    }
+
+    @Override
+    public String modelDocFileFolder() {
+        return (outputFolder + "/" + modelDocPath).replace('/', File.separatorChar);
     }
 
     @Override

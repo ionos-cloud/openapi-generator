@@ -60,6 +60,11 @@ public class CodegenOperation {
     public List<Map<String, String>> requestBodyExamples;
     public ExternalDocumentation externalDocs;
     public Map<String, Object> vendorExtensions = new HashMap<String, Object>();
+    // ionos - getter for vendor extensions
+    public Map<String, Object> getVendorExtensions() {
+        return vendorExtensions;
+    }
+
     public String nickname; // legacy support
     public String operationIdOriginal; // for plug-in
     public String operationIdLowerCase; // for markdown documentation
@@ -240,7 +245,8 @@ public class CodegenOperation {
      * @return true if act as Restful index method, false otherwise
      */
     public boolean isRestfulIndex() {
-        return "GET".equalsIgnoreCase(httpMethod) && "".equals(pathWithoutBaseName());
+        // ionos - isrestfulindex changes to add params for list methods
+        return "GET".equalsIgnoreCase(httpMethod) && !isMemberPath();
     }
 
     /**
@@ -258,7 +264,8 @@ public class CodegenOperation {
      * @return true if act as Restful create method, false otherwise
      */
     public boolean isRestfulCreate() {
-        return "POST".equalsIgnoreCase(httpMethod) && "".equals(pathWithoutBaseName());
+        // ionos - changes to add params for list methods
+        return "POST".equalsIgnoreCase(httpMethod) && !isMemberPath();
     }
 
     /**
@@ -312,9 +319,10 @@ public class CodegenOperation {
      * @return true if path act as member
      */
     private boolean isMemberPath() {
-        if (pathParams.size() != 1) return false;
-        String id = pathParams.get(0).baseName;
-        return ("/{" + id + "}").equals(pathWithoutBaseName());
+        // ionos - isrestfulindex changes to add params for list methods
+        if (pathParams.size() < 1) return false;
+        String id = pathParams.get(pathParams.size() - 1).baseName;
+        return path.endsWith("/{" + id + "}");
     }
 
     @Override

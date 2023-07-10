@@ -117,8 +117,9 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     protected boolean discriminatorCaseSensitive = true; // True if the discriminator value lookup should be case-sensitive.
     protected Boolean serializableModel = false;
     protected boolean serializeBigDecimalAsString = false;
-    protected String apiDocPath = "docs/";
-    protected String modelDocPath = "docs/";
+    // ionos - path to docs
+    protected String apiDocPath = "docs/api/";
+    protected String modelDocPath = "docs/models/";
     protected boolean supportJava6 = false;
     protected boolean disableHtmlEscaping = false;
     protected String booleanGetterPrefix = "get";
