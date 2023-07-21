@@ -26,6 +26,7 @@ import io.airlift.airline.Command;
 import io.airlift.airline.Option;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
