@@ -65,7 +65,9 @@ public class InlineModelResolver {
     final Logger LOGGER = LoggerFactory.getLogger(InlineModelResolver.class);
 
     public InlineModelResolver() {
-        this.inlineSchemaNameDefaults.put("arrayItemSuffix", "_inner");
+        // Ionos Note (alex): This was used to append Inner to nested array properties.
+        // Would have been a breaking change for SDKs
+        this.inlineSchemaNameDefaults.put("arrayItemSuffix", "");
         this.inlineSchemaNameDefaults.put("mapItemSuffix", "_value");
     }
 
