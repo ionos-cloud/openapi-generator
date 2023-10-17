@@ -26,6 +26,7 @@ import io.airlift.airline.Command;
 import io.airlift.airline.Option;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -186,7 +187,7 @@ public class Generate extends OpenApiGeneratorCommand {
             title = "inline schema name defaults",
             description = "specifies the default values used when naming inline schema as such array items in the format of arrayItemSuffix=_inner,mapItemSuffix=_value. "
                     + " ONLY arrayItemSuffix, mapItemSuffix are supported at the moment. `SKIP_SCHEMA_REUSE=true` is a special value to skip reusing inline schemas.")
-    private List<String> inlineSchemaNameDefaults = new ArrayList<>();
+    private List<String> inlineSchemaNameDefaults = Arrays.asList("arrayItemSuffix=", "mapItemSuffix=", "REFACTOR_ALLOF_INLINE_SCHEMAS=true");
 
     @Option(
             name = {"--openapi-normalizer"},

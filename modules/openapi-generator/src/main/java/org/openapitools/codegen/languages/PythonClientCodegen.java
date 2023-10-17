@@ -52,8 +52,9 @@ public class PythonClientCodegen extends AbstractPythonCodegen implements Codege
     public static final String MAP_NUMBER_TO = "mapNumberTo";
 
     protected String packageUrl;
-    protected String apiDocPath = "docs" + File.separator;
-    protected String modelDocPath = "docs" + File.separator;
+    // ionos - path to docs
+    protected String apiDocPath = "docs" + File.separator + "api" +File.separator;
+    protected String modelDocPath = "docs" + File.separator +"models" + File.separator;
     protected boolean hasModelsToImport = Boolean.FALSE;
     protected boolean useOneOfDiscriminatorLookup = false; // use oneOf discriminator's mapping for model lookup
     protected String datetimeFormat = "%Y-%m-%dT%H:%M:%S.%f%z";
@@ -105,9 +106,11 @@ public class PythonClientCodegen extends AbstractPythonCodegen implements Codege
         importMapping.clear();
 
         // override type mapping in abstract python codegen
-        typeMapping.put("array", "List");
-        typeMapping.put("set", "List");
-        typeMapping.put("map", "Dict");
+        //ionos - we don't want to use typing.List instead of list
+        // it's a breaking change that seems without a real benefit
+        typeMapping.put("array", "list");
+        typeMapping.put("set", "list");
+        typeMapping.put("map", "dict");
         typeMapping.put("decimal", "decimal.Decimal");
         typeMapping.put("file", "bytearray");
         typeMapping.put("binary", "bytearray");
@@ -722,7 +725,8 @@ public class PythonClientCodegen extends AbstractPythonCodegen implements Codege
                 constraints += ", unique_items=True";
             }
             pydanticImports.add("conlist");
-            typingImports.add("List"); // for return type
+            //ionos - use primitives, not typing.List
+            typingImports.add("list"); // for return type
             return String.format(Locale.ROOT, "conlist(%s%s)",
                     getPydanticType(cp.items, typingImports, pydanticImports, datetimeImports, modelImports, exampleImports, classname),
                     constraints);
