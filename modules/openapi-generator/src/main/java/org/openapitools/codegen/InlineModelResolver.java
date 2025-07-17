@@ -64,7 +64,7 @@ public class InlineModelResolver {
     final Logger LOGGER = LoggerFactory.getLogger(InlineModelResolver.class);
 
     public InlineModelResolver() {
-        this.inlineSchemaOptions.put("ARRAY_ITEM_SUFFIX", "_inner");
+        this.inlineSchemaOptions.put("ARRAY_ITEM_SUFFIX", "");
         this.inlineSchemaOptions.put("MAP_ITEM_SUFFIX", "_value");
     }
 

@@ -1415,17 +1415,20 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     }
 
     private String getDefaultCollectionType(Schema schema, String defaultValues) {
-        String arrayFormat = "new %s<>(Arrays.asList(%s))";
+        String arrayFormat = "new %s<%s>(Arrays.asList(%s))";
+        Schema<?> items = getSchemaItems(schema);
+        String typeDeclaration = getTypeDeclaration(ModelUtils.unaliasSchema(this.openAPI, items));
+
         if (defaultValues == null || defaultValues.isEmpty()) {
             defaultValues = "";
-            arrayFormat = "new %s<>()";
+            arrayFormat = "new %s<%s>()";
         }
 
         if (ModelUtils.isSet(schema)) {
             return String.format(Locale.ROOT, arrayFormat,
-                    instantiationTypes().getOrDefault("set", "LinkedHashSet"), defaultValues);
+                    instantiationTypes().getOrDefault("set", "LinkedHashSet"), typeDeclaration, defaultValues);
         }
-        return String.format(Locale.ROOT, arrayFormat, instantiationTypes().getOrDefault("array", "ArrayList"), defaultValues);
+        return String.format(Locale.ROOT, arrayFormat, instantiationTypes().getOrDefault("array", "ArrayList"), typeDeclaration, defaultValues);
     }
 
     @Override
