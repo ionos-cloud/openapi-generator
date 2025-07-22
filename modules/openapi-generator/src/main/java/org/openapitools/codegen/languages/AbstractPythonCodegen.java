@@ -2130,12 +2130,10 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
         }
 
         private String finalizeType(CodegenProperty cp, PythonType pt) {
-            if (!cp.required || cp.isNullable) {
-                moduleImports.add("typing", "Optional");
-                PythonType opt = new PythonType("Optional");
-                opt.addTypeParam(pt);
-                pt = opt;
-            }
+            moduleImports.add("typing", "Optional");
+            PythonType opt = new PythonType("Optional");
+            opt.addTypeParam(pt);
+            pt = opt;
 
             if (!StringUtils.isEmpty(cp.description)) { // has description
                 pt.annotate("description", cp.description);
@@ -2152,19 +2150,19 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
             }*/
 
             //String defaultValue = null;
-            if (!cp.required) { //optional
-                if (cp.defaultValue == null) {
-                    pt.setDefaultValue("None");
-                } else {
-                    if (cp.isArray || cp.isMap) {
-                        // TODO handle default value for array/map
-                        pt.setDefaultValue("None");
-                    } else {
-                        //defaultValue = ;
-                        pt.setDefaultValue(cp.defaultValue);
-                    }
-                }
-            }
+            //optional
+            pt.setDefaultValue("None");
+            // if (cp.defaultValue == null) {
+            //     pt.setDefaultValue("None");
+            // } else {
+            //     if (cp.isArray || cp.isMap) {
+            //         // TODO handle default value for array/map
+            //         pt.setDefaultValue("None");
+            //     } else {
+            //         //defaultValue = ;
+            //         pt.setDefaultValue(cp.defaultValue);
+            //     }
+            // }
 
             String typeConstraint = pt.asTypeConstraint(moduleImports);
             String typeValue = pt.asTypeValue(moduleImports);
@@ -2211,12 +2209,10 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
         }
 
         private String finalizeType(CodegenParameter cp, PythonType pt) {
-            if (!cp.required || cp.isNullable) {
-                moduleImports.add("typing", "Optional");
-                PythonType opt = new PythonType("Optional");
-                opt.addTypeParam(pt);
-                pt = opt;
-            }
+            moduleImports.add("typing", "Optional");
+            PythonType opt = new PythonType("Optional");
+            opt.addTypeParam(pt);
+            pt = opt;
 
             if (!StringUtils.isEmpty(cp.description)) { // has description
                 pt.annotate("description", cp.description);
