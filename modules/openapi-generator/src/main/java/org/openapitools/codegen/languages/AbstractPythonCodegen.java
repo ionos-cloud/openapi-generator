@@ -2130,6 +2130,7 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
         }
 
         private String finalizeType(CodegenProperty cp, PythonType pt) {
+            // ionos - remove if, make all optional
             moduleImports.add("typing", "Optional");
             PythonType opt = new PythonType("Optional");
             opt.addTypeParam(pt);
@@ -2151,6 +2152,7 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
 
             //String defaultValue = null;
             //optional
+            // ionos - remove all default values, use None
             pt.setDefaultValue("None");
             // if (cp.defaultValue == null) {
             //     pt.setDefaultValue("None");
@@ -2209,6 +2211,7 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
         }
 
         private String finalizeType(CodegenParameter cp, PythonType pt) {
+            // ionos - remove if, make all optional
             moduleImports.add("typing", "Optional");
             PythonType opt = new PythonType("Optional");
             opt.addTypeParam(pt);
