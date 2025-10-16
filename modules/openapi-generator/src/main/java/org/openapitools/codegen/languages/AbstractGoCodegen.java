@@ -154,7 +154,8 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
                         "float32", "float64")
         );
 
-        apiNameSuffix = "API";
+// ionos - change to avoid renaming of generated service, which would be a breaking change
+//        apiNameSuffix = "API";
 
         cliOptions.clear();
         cliOptions.add(new CliOption(CodegenConstants.PACKAGE_NAME, "Go package name (convention: lowercase).")

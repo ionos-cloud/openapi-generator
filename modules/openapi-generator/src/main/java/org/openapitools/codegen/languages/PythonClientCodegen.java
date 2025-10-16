@@ -49,8 +49,9 @@ public class PythonClientCodegen extends AbstractPythonCodegen implements Codege
     public static final String SET_ENSURE_ASCII_TO_FALSE = "setEnsureAsciiToFalse";
 
     @Setter protected String packageUrl;
-    protected String apiDocPath = "docs/";
-    protected String modelDocPath = "docs/";
+    // ionos - path to docs
+    protected String apiDocPath = "docs" + File.separator + "api" +File.separator;
+    protected String modelDocPath = "docs" + File.separator +"models" + File.separator;
     @Setter protected boolean useOneOfDiscriminatorLookup = false; // use oneOf discriminator's mapping for model lookup
     @Setter protected String datetimeFormat = "%Y-%m-%dT%H:%M:%S.%f%z";
     @Setter protected String dateFormat = "%Y-%m-%d";
@@ -94,9 +95,11 @@ public class PythonClientCodegen extends AbstractPythonCodegen implements Codege
         importMapping.clear();
 
         // override type mapping in abstract python codegen
-        typeMapping.put("array", "List");
-        typeMapping.put("set", "List");
-        typeMapping.put("map", "Dict");
+        //ionos - we don't want to use typing.List instead of list
+        // it's a breaking change that seems without a real benefit
+        typeMapping.put("array", "list");
+        typeMapping.put("set", "list");
+        typeMapping.put("map", "dict");
         typeMapping.put("decimal", "decimal.Decimal");
         typeMapping.put("file", "bytearray");
         typeMapping.put("binary", "bytearray");

@@ -162,8 +162,9 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     @Getter @Setter
     protected Boolean serializableModel = false;
     @Setter protected boolean serializeBigDecimalAsString = false;
-    protected String apiDocPath = "docs/";
-    protected String modelDocPath = "docs/";
+    // ionos - path to docs
+    protected String apiDocPath = "docs/api/";
+    protected String modelDocPath = "docs/models/";
     @Setter protected boolean disableHtmlEscaping = false;
     @Getter @Setter
     protected String booleanGetterPrefix = "get";

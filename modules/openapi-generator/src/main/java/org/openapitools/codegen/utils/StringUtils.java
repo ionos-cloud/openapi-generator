@@ -77,6 +77,9 @@ public class StringUtils {
             result = pkgSeparatorPattern.matcher(wordToUnderscore).replaceAll("/");
             // Replace $ with two underscores for inner classes.
             result = dollarPattern.matcher(result).replaceAll("__");
+            // ionos - not sure
+            // Normalize uppercase/lowercase letters in acronyms
+            result = escapeWordTokens(result);
             // Replace capital letter with _ plus lowercase letter.
             result = capitalLetterPattern.matcher(result).replaceAll(replacementPattern);
             result = lowercasePattern.matcher(result).replaceAll(replacementPattern);
@@ -87,7 +90,23 @@ public class StringUtils {
             return result;
         });
     }
-
+    /**
+     * Escapes the Word Tokens set on escapedWordTokens Global Property.
+     * E.g. deleteABC -> deleteAbc; the result can be then transformed into snake case as delete_abc.
+     * @param result The name of the property
+     * @return The processed name of the property, with the tokens escaped
+     */
+    private static String escapeWordTokens(String result) {
+        List<String> escapedWordTokens = new ArrayList<>();
+        String escapedWordTokensProperty = GlobalSettings.getProperty("escapedWordTokens");
+        if(escapedWordTokensProperty != null) {
+            escapedWordTokens = Arrays.asList(escapedWordTokensProperty.split(","));
+        }
+        for(String token : escapedWordTokens) {
+            result = result.replaceAll(token, token.charAt(0) + token.substring(1).toLowerCase(Locale.ROOT));
+        }
+        return result;
+    }
     /**
      * Dashize the given word.
      *

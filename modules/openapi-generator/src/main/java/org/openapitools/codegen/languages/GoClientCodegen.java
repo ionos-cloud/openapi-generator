@@ -46,8 +46,9 @@ public class GoClientCodegen extends AbstractGoCodegen {
 
     private final Logger LOGGER = LoggerFactory.getLogger(GoClientCodegen.class);
     @Setter protected String packageVersion = "1.0.0";
-    protected String apiDocPath = "docs/";
-    protected String modelDocPath = "docs/";
+    // ionos - path to docs
+    protected String apiDocPath = "docs/api/";
+    protected String modelDocPath = "docs/models/";
     protected String modelFileFolder = null;
     public static final String WITH_XML = "withXml";
     public static final String STRUCT_PREFIX = "structPrefix";
