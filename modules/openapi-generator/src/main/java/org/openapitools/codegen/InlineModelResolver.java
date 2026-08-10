@@ -234,6 +234,16 @@ public class InlineModelResolver {
                 }
             }
 
+            if (isSingleAllOf && m.getAllOf().get(0).get$ref() != null
+                    && !m.getAllOf().get(0).get$ref().isEmpty()) {
+                // Single allOf that is just a $ref: the property is an alias for the
+                // referenced schema, so no separate inline model is needed regardless of
+                // sibling keywords such as description. Pass the RAW ref schema here --
+                // dereferencing it (as the loop below does) would report "model needed"
+                // for any object target and mint a duplicate <Parent><Prop> model.
+                return isModelNeeded(m.getAllOf().get(0), visitedSchemas);
+            }
+
             if (m.getAllOf() != null && !m.getAllOf().isEmpty()) {
                 // check to ensure at least one of the allOf item is model
                 for (Schema inner : m.getAllOf()) {
