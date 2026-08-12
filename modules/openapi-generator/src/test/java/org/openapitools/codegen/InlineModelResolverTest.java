@@ -1132,4 +1132,21 @@ public class InlineModelResolverTest {
         assertTrue((Schema) schema.getAnyOf().get(0) instanceof StringSchema);
         assertTrue((Schema) schema.getAnyOf().get(1) instanceof IntegerSchema);
     }
+
+    @Test
+    public void testSingleRefAllOfPropertyReusesReferencedSchema() {
+        OpenAPI openAPI = TestUtils.parseSpec("src/test/resources/3_0/inline_model_single_ref_allof_property.yaml");
+        InlineModelResolver resolver = new InlineModelResolver();
+        resolver.flatten(openAPI);
+
+        // A property written as a single-element allOf around a $ref is an alias for the
+        // referenced schema -- a bare $ref cannot carry a sibling description. It must not
+        // get a model of its own, or every such property mints a duplicate of its target.
+        assertNull(openAPI.getComponents().getSchemas().get("ServerProperties_bootVolume"));
+
+        Schema serverProperties = openAPI.getComponents().getSchemas().get("ServerProperties");
+        Schema bootVolume = (Schema) serverProperties.getProperties().get("bootVolume");
+        assertEquals("#/components/schemas/ResourceReference",
+                ((Schema) bootVolume.getAllOf().get(0)).get$ref());
+    }
 }
